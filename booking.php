@@ -7,11 +7,28 @@ $is_logged_in = isset($_SESSION['user_id']);
 
 // Fetch staff members from the database
 $staff_members = [];
-$query = "SELECT first_name, last_name FROM user WHERE role = 'staff'"; // Adjust the role as necessary
+$query = "SELECT id, first_name, last_name FROM user WHERE role = 'staff'"; // Added id to selection
 $result = $conn->query($query);
 if ($result) {
     while ($row = $result->fetch_assoc()) {
-        $staff_members[] = $row['first_name'] . ' ' . $row['last_name'];
+        $staff_members[] = [
+            'id' => $row['id'],
+            'name' => $row['first_name'] . ' ' . $row['last_name']
+        ];
+    }
+}
+
+// Add this PHP code near the top of the file after the existing database queries
+$services_by_category = [];
+$services_query = "SELECT id, name, price, category FROM service ORDER BY name";
+$services_result = $conn->query($services_query);
+if ($services_result) {
+    while ($service = $services_result->fetch_assoc()) {
+        $services_by_category[$service['category']][] = [
+            'id' => $service['id'],
+            'name' => $service['name'],
+            'price' => $service['price']
+        ];
     }
 }
 ?>
@@ -110,7 +127,7 @@ if ($result) {
 
 
 <!-- Booking Section -->
-<section class="ftco-section">
+<section class="ftco-section" style="padding-top: 2em;">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-10">
@@ -241,55 +258,59 @@ $(document).ready(function() {
         autoclose: true
     });
 
+    // Get services data from PHP
+    const servicesData = <?php echo json_encode($services_by_category); ?>;
+
     // Service category change handler
     $('#serviceCategory').change(function() {
-        const category = $(this).val();
+        updateServiceOptions();
+    });
+
+    function updateServiceOptions() {
+        const category = $('#serviceCategory').val();
         const specificService = $('#specificService');
         const staffMember = $('#staffMember');
         specificService.empty();
         staffMember.empty();
         
-        if (category === 'hair') {
-            specificService.append(`
-                <option value="">Select a hair service</option>
-                <option value="haircut">Haircut & Styling - $40</option>
-                <option value="coloring">Hair Coloring - $85</option>
-                <option value="treatment">Hair Treatment - $65</option>
-                <option value="extension">Hair Extension - $150</option>
-                <option value="bridal">Bridal Hairstyle - $120</option>
-            `);
-        } else if (category === 'skin') {
-            specificService.append(`
-                <option value="">Select a skin care service</option>
-                <option value="facial">Facial Basic - $45</option>
-                <option value="deep_cleansing">Deep Cleansing - $65</option>
-                <option value="anti_aging">Anti-Aging Treatment - $85</option>
-                <option value="acne">Acne Treatment - $55</option>
-                <option value="brightening">Skin Brightening - $75</option>
-            `);
-        } else if (category === 'makeup') {
-            specificService.append(`
-                <option value="">Select a makeup service</option>
-                <option value="natural">Natural Makeup - $50</option>
-                <option value="party">Party Makeup - $75</option>
-                <option value="bridal">Bridal Makeup - $150</option>
-                <option value="eye">Eye Makeup - $35</option>
-                <option value="lesson">Makeup Lesson - $80</option>
-            `);
+        // Add default option
+        specificService.append('<option value="">Select a service</option>');
+        
+        // Add services from database
+        if (category && servicesData[category]) {
+            servicesData[category].forEach(function(service) {
+                specificService.append(`
+                    <option value="${service.id}">
+                        ${service.name} - ₱${service.price}
+                    </option>
+                `);
+            });
         }
 
         // Populate staff members based on the fetched data
         const staffOptions = <?php echo json_encode($staff_members); ?>;
+        staffMember.append('<option value="">Select a staff member</option>');
         staffOptions.forEach(function(staff) {
-            staffMember.append(`<option value="${staff}">${staff}</option>`);
+            staffMember.append(`<option value="${staff.id}">${staff.name}</option>`);
         });
-    });
+    }
 
-    // Pre-select service category if passed in URL
+    // Pre-select service category and specific service if passed in URL
     const urlParams = new URLSearchParams(window.location.search);
     const serviceParam = urlParams.get('service');
+    const serviceIdParam = urlParams.get('service_id');
+    
     if (serviceParam) {
-        $('#serviceCategory').val(serviceParam).trigger('change');
+        $('#serviceCategory').val(serviceParam);
+        updateServiceOptions(); // Update the specific services dropdown
+        
+        // If a specific service ID was passed, select it after a short delay
+        // to ensure the options are populated
+        if (serviceIdParam) {
+            setTimeout(() => {
+                $('#specificService').val(serviceIdParam);
+            }, 100);
+        }
     }
 });
 </script>

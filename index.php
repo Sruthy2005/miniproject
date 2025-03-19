@@ -94,7 +94,7 @@
               <a href="index.php" class="nav-link">Home</a>
             </li>
             <li class="nav-item">
-              <a href="about.html"s class="nav-link">About</a>
+              <a href="about.php" class="nav-link">About</a>
             </li>
             <li class="nav-item dropdown">
               <a href="services.php" class="nav-link dropdown" data-toggle="dropdown">Services</a>
@@ -106,7 +106,7 @@
               </div>
             </li>
             <li class="nav-item">
-              <a href="work.html" class="nav-link">Work</a>
+              <a href="work.php" class="nav-link">Work</a>
             </li>
             <li class="nav-item dropdown">
               <a href="#" class="nav-link dropdown" data-toggle="dropdown">Booking</a>

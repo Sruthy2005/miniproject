@@ -1,3 +1,7 @@
+<?php
+session_start();
+require_once "connect.php";
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -32,52 +36,8 @@
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
-    <nav
-      class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light"
-      id="ftco-navbar"
-    >
-      <div class="container">
-        <a class="navbar-brand" href="index.html">BELLEZZA</a>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-toggle="collapse"
-          data-target="#ftco-nav"
-          aria-controls="ftco-nav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="oi oi-menu"></span> Menu
-        </button>
-
-        <div class="collapse navbar-collapse" id="ftco-nav">
-          <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-              <a href="index.php" class="nav-link">Home</a>
-            </li>
-            <li class="nav-item">
-              <a href="about.html" class="nav-link">About</a>
-            </li>
-            <li class="nav-item">
-              <a href="services.php" class="nav-link">Services</a>
-            </li>
-            <li class="nav-item active">
-              <a href="work.html" class="nav-link">Work</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a href="#" class="nav-link dropdown" data-toggle="dropdown"
-                >Booking</a
-              >
-              <div class="dropdown-menu">
-                <a class="dropdown-item" href="booking.php">Book a Service</a>
-                <a class="dropdown-item" href="my_bookings.php">My Bookings</a>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-    <!-- END nav -->
+    <!-- Include your existing navigation -->
+    <?php include 'navbar.php'; ?>
 
     <section class="ftco-section">
       <div class="container">
@@ -86,9 +46,6 @@
             <h2 class="mb-4">Our Work</h2>
             <p class="work-category">
               <span class="px-2"><a href="#" class="active">All</a></span>
-              <span class="px-2"><a href="#">Make Up</a></span>
-              <span class="px-2"><a href="#">Hair</a></span>
-              <span class="px-2"><a href="#">Skin</a></span>
             </p>
           </div>
         </div>

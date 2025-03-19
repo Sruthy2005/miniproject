@@ -94,11 +94,9 @@ $staff_name = htmlspecialchars($staff['name'] ?? 'Staff Member');
                     </div>
                 </div>
                 <div class="navbar-nav w-100">
+                    <a href="../index.php" class="nav-item nav-link"><i class="fa fa-home me-2"></i>Home</a>
                     <a href="staff_dashboard.php" class="nav-item nav-link active"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
                     <a href="my_appointments.php" class="nav-item nav-link"><i class="fa fa-calendar-check me-2"></i>My Appointments</a>
-                    <a href="my_schedule.php" class="nav-item nav-link"><i class="fa fa-clock me-2"></i>My Schedule</a>
-                    <a href="my_services.php" class="nav-item nav-link"><i class="fa fa-cut me-2"></i>My Services</a>
-                    <a href="my_clients.php" class="nav-item nav-link"><i class="fa fa-users me-2"></i>My Clients</a>
                     <a href="../profile.php" class="nav-item nav-link"><i class="fa fa-user me-2"></i>My Profile</a>
                     <a href="../logout.php" class="nav-item nav-link"><i class="fa fa-sign-out-alt me-2"></i>Logout</a>
                 </div>
@@ -126,8 +124,7 @@ $staff_name = htmlspecialchars($staff['name'] ?? 'Staff Member');
                             <span class="d-none d-lg-inline-flex"><?php echo $staff_name; ?></span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end bg-light border-0 rounded-0 rounded-bottom m-0">
-                            <a href="my_profile.php" class="dropdown-item">My Profile</a>
-                            <a href="my_schedule.php" class="dropdown-item">My Schedule</a>
+                            <a href="../profile.php" class="dropdown-item">My Profile</a>
                             <a href="../logout.php" class="dropdown-item">Log Out</a>
                         </div>
                     </div>

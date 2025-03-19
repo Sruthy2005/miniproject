@@ -18,25 +18,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $time = mysqli_real_escape_string($conn, $_POST['time']);
     $notes = mysqli_real_escape_string($conn, $_POST['notes']);
     
-    // Get service price based on specific service
+    // Get service price from database
     $price = 0;
-    switch($specific_service) {
-        case 'haircut': $price = 40; break;
-        case 'coloring': $price = 85; break;
-        case 'treatment': $price = 65; break;
-        case 'extension': $price = 150; break;
-        case 'bridal': $price = 120; break;
-        case 'facial': $price = 45; break;
-        case 'deep_cleansing': $price = 65; break;
-        case 'anti_aging': $price = 85; break;
-        case 'acne': $price = 55; break;
-        case 'brightening': $price = 75; break;
-        case 'natural': $price = 50; break;
-        case 'party': $price = 75; break;
-        case 'bridal_makeup': $price = 150; break;
-        case 'eye': $price = 35; break;
-        case 'lesson': $price = 80; break;
+    $price_query = "SELECT price FROM service WHERE name = ?";
+    $stmt_price = $conn->prepare($price_query);
+    if (!$stmt_price) {
+        die('Prepare failed: ' . htmlspecialchars($conn->error));
     }
+    $stmt_price->bind_param("s", $specific_service);
+    if ($stmt_price->execute()) {
+        $result = $stmt_price->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $price = $row['price'];
+        }
+    }
+    $stmt_price->close();
 
     // Insert booking into database
     $sql = "INSERT INTO bookings (user_id, staff_member, service_category, specific_service, date, time, notes, price, status, created_at) 

@@ -29,39 +29,52 @@
                 <li class="nav-item">
                     <a href="work.html" class="nav-link">Work</a>
                 </li>
-                <li class="nav-item">
-                    <a href="contact.html" class="nav-link">Contact</a>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown" data-toggle="dropdown">Booking</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="booking.php">Book a Service</a>
+                        <a class="dropdown-item" href="my_bookings.php">My Bookings</a>
+                    </div>
                 </li>
                 <li class="nav-item dropdown">
-                    <?php
-                    if(isset($_SESSION['user_id'])) {
-                        require_once "connect.php";
-                        $user_id = $_SESSION['user_id'];
-                        $query = "SELECT first_name, last_name, role FROM user WHERE id = '$user_id'";
-                        $result = mysqli_query($conn, $query);
-                        $user = mysqli_fetch_assoc($result);
-                        
-                        echo '<div class="profile-circle dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="icon-user"></span>
-                                <span class="user-name">' . $user['first_name'] . ' ' . $user['last_name'] . '</span>
-                              </div>
-                              <div class="dropdown-menu">';
-                        
-                        // Add dashboard link for admin and staff
-                        if($user['role'] == 'admin') {
-                            echo '<a class="dropdown-item" href="admin_dash/admin.php">Dashboard</a>';
-                        } else if($user['role'] == 'staff') {
-                            echo '<a class="dropdown-item" href="staff_dashh/staff_dashboard.php">Dashboard</a>';
-                        }
-                        
-                        echo '<a class="dropdown-item" href="profile.php">Profile</a>
-                              <div class="dropdown-divider"></div>
-                              <a class="dropdown-item" href="logout.php">Logout</a>
-                              </div>';
-                    } else {
-                        echo '<a href="login.php" class="nav-link">Login</a>';
-                    }
-                    ?>
+                <?php
+              // Remove session_start() since session is already active
+              if(isset($_SESSION['user_id'])) {
+                require_once "connect.php";
+                $user_id = $_SESSION['user_id'];
+                $query = "SELECT first_name, last_name, role, profile_image FROM user WHERE id = '$user_id'";
+                $result = mysqli_query($conn, $query);
+                $user = mysqli_fetch_assoc($result);
+                
+                // Set profile image with fallback to default
+                if (!isset($_SESSION['profile_image'])) {
+                  $_SESSION['profile_image'] = $user['profile_image'] ?? 'images/default-avatar.jpg';
+                }
+                
+                $profile_image = $_SESSION['profile_image'];
+                $username = $user['first_name'] . ' ' . $user['last_name'];
+                
+                echo '<div class="profile-circle dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <img src="' . htmlspecialchars($profile_image) . '" alt="Profile" class="profile-image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 10px;">
+                        <span class="user-name">' . $username . '</span>
+                      </div>
+                      <div class="dropdown-menu">';
+                
+                // Add dashboard link for admin and staff
+                if($user['role'] == 'admin') {
+                  echo '<a class="dropdown-item" href="admin_dash/admin.php">Dashboard</a>';
+                } else if($user['role'] == 'staff') {
+                  echo '<a class="dropdown-item" href="staff_dashh/staff_dashboard.php">Dashboard</a>';
+                }
+                
+                echo '<a class="dropdown-item" href="profile.php">Profile</a>
+                      <div class="dropdown-divider"></div>
+                      <a class="dropdown-item" href="logout.php">Logout</a>
+                      </div>';
+              } else {
+                echo '<a href="login.php" class="nav-link">Login</a>';
+              }
+              ?>
                 </li>
             </ul>
         </div>

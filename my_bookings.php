@@ -12,13 +12,14 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $query = "SELECT 
             b.*, 
-            u.first_name as staff_first_name, 
-            u.last_name as staff_last_name,
+            staff.first_name as staff_first_name, 
+            staff.last_name as staff_last_name,
             s.name as service_name,
+            s.category as service_category,
             s.price as service_price
           FROM bookings b
-          LEFT JOIN user u ON b.staff_member = u.id
-          LEFT JOIN service s ON b.service_category = s.id
+          LEFT JOIN user staff ON b.staff_member = staff.id 
+          LEFT JOIN service s ON b.specific_service = s.id
           WHERE b.user_id = ?
           ORDER BY b.date DESC, b.time DESC";
 
@@ -102,6 +103,16 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
             border-radius: 10px;
             margin: 20px 0;
         }
+
+        .booking-price {
+            color: #28a745;
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+
+        .booking-price .amount {
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -110,6 +121,30 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
 
 <section class="ftco-section">
     <div class="container">
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <?php 
+                echo $_SESSION['success'];
+                unset($_SESSION['success']);
+                ?>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <?php 
+                echo $_SESSION['error'];
+                unset($_SESSION['error']);
+                ?>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        <?php endif; ?>
+
         <div class="row justify-content-center mb-5">
             <div class="col-md-7 text-center">
                 <h2 class="mb-4">My Bookings</h2>
@@ -130,10 +165,16 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                         <div class="booking-card">
                             <div class="row">
                                 <div class="col-md-8">
-                                    <h4><?php echo htmlspecialchars($booking['service_name']); ?></h4>
+                                    <h4><?php echo htmlspecialchars($booking['service_name']); ?> - <?php echo htmlspecialchars($booking['service_category']); ?></h4>
                                     <p>
                                         <strong>Staff:</strong> 
-                                        <?php echo htmlspecialchars($booking['staff_first_name'] . ' ' . $booking['staff_last_name']); ?>
+                                        <?php 
+                                        if (!empty($booking['staff_first_name']) && !empty($booking['staff_last_name'])) {
+                                            echo htmlspecialchars($booking['staff_first_name'] . ' ' . $booking['staff_last_name']);
+                                        } else {
+                                            echo 'Not assigned';
+                                        }
+                                        ?>
                                     </p>
                                     <p class="booking-date">
                                         <?php 
@@ -142,7 +183,10 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                                         echo $date->format('F j, Y') . ' at ' . $time->format('g:i A');
                                         ?>
                                     </p>
-                                    <p><strong>Price:</strong> $<?php echo number_format($booking['service_price'], 2); ?></p>
+                                    <p class="booking-price">
+                                        <strong>Price:</strong> 
+                                        <span class="amount">₱<?php echo number_format($booking['service_price'], 2); ?></span>
+                                    </p>
                                     <?php if ($booking['notes']): ?>
                                         <p><strong>Notes:</strong> <?php echo htmlspecialchars($booking['notes']); ?></p>
                                     <?php endif; ?>
@@ -152,17 +196,31 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                                         <?php echo ucfirst($booking['status']); ?>
                                     </span>
                                     
-                                    <?php if ($booking['status'] == 'pending' || $booking['status'] == 'confirmed'): ?>
+                                    <?php 
+                                    // Check if there's a payment record and if it's completed
+                                    $query = "SELECT status FROM payments WHERE booking_id = ?";
+                                    $stmt = $conn->prepare($query);
+                                    $stmt->bind_param("i", $booking['id']);
+                                    $stmt->execute();
+                                    $paymentResult = $stmt->get_result();
+                                    $paymentStatus = $paymentResult->fetch_assoc();
+                                    
+                                    if (!$paymentStatus || $paymentStatus['status'] !== 'completed'): ?>
                                         <div class="booking-actions">
-                                            <?php if (strtotime($booking['date']) > strtotime('+24 hours')): ?>
-                                                <a href="reschedule_booking.php?id=<?php echo $booking['id']; ?>" 
-                                                   class="btn btn-sm btn-primary">Reschedule</a>
-                                                <a href="cancel_booking.php?id=<?php echo $booking['id']; ?>" 
-                                                   class="btn btn-sm btn-danger"
-                                                   onclick="return confirm('Are you sure you want to cancel this booking?')">
-                                                    Cancel
-                                                </a>
+                                            <a href="process_payment.php?id=<?php echo $booking['id']; ?>" 
+                                               class="btn btn-sm btn-success">Pay Now</a>
+                                            <?php if ($booking['status'] !== 'cancelled' && $booking['status'] !== 'completed'): ?>
+                                                <button onclick="confirmCancel(<?php echo $booking['id']; ?>)" 
+                                                        class="btn btn-sm btn-danger mt-2">Cancel Booking</button>
                                             <?php endif; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="mt-2">
+                                            <span class="badge bg-success">Payment Completed</span>
+                                            <div class="booking-actions mt-2">
+                                                <a href="booking_details.php?id=<?php echo $booking['id']; ?>" 
+                                                   class="btn btn-sm btn-info">View Details</a>
+                                            </div>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -200,6 +258,14 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
 <script src="js/jquery.timepicker.min.js"></script>
 <script src="js/scrollax.min.js"></script>
 <script src="js/main.js"></script>
+
+<script>
+function confirmCancel(bookingId) {
+    if (confirm('Are you sure you want to cancel this booking?')) {
+        window.location.href = `cancel_booking.php?id=${bookingId}`;
+    }
+}
+</script>
 
 </body>
 </html> 

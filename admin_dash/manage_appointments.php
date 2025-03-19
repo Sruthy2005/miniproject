@@ -20,30 +20,26 @@ if (!$result) {
 $user = mysqli_fetch_assoc($result);
 $name = $user['first_name'];
 
-// Add CSRF protection
-if (!isset($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
+// Fetch all bookings with user details
+$sql = "SELECT b.*, u.first_name, u.last_name, u.email, u.phone, s.name as service_name, s.category as service_category 
+        FROM bookings b
+        LEFT JOIN user u ON b.user_id = u.id 
+        LEFT JOIN service s ON b.specific_service = s.id
+        ORDER BY b.date DESC";
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die('CSRF token validation failed');
-    }
+$result = $conn->query($sql);
+
+if (!$result) {
+    die("Query failed: " . $conn->error);
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
-    <title>Admin Dashboard</title>
+    <title>Admin Dashboard - Manage Appointments</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <meta content="" name="keywords">
-    <meta content="" name="description">
-
-    <!-- Favicon -->
-    <link href="img/favicon.ico" rel="icon">
 
     <!-- Google Web Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,6 +59,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Template Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
+
+    <style>
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending { background-color: #fff3cd; color: #856404; }
+        .status-approved { background-color: #d4edda; color: #155724; }
+        .status-cancelled { background-color: #f8d7da; color: #721c24; }
+        .status-completed { background-color: #cce5ff; color: #004085; }
+        .contact-info {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .contact-info i {
+            width: 20px;
+            color: #6c757d;
+        }
+        .action-buttons .btn {
+            margin: 0 2px;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+    </style>
 </head>
 
 <body>
@@ -92,10 +114,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
                 <div class="navbar-nav w-100">
-                <a href="../index.php" class="nav-item nav-link"><i class="fa fa-home me-2"></i>Bellezza</a>
-                    <a href="admin.php" class="nav-item nav-link active"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
+                    <a href="../index.php" class="nav-item nav-link"><i class="fa fa-home me-2"></i>Bellezza</a>
+                    <a href="admin.php" class="nav-item nav-link"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
                     <a href="manage_users.php" class="nav-item nav-link"><i class="fa fa-users me-2"></i>Manage Users</a>
-                    <a href="manage_appointments.php" class="nav-item nav-link"><i class="fa fa-calendar-check me-2"></i>Appointments</a>
+                    <a href="manage_appointments.php" class="nav-item nav-link active"><i class="fa fa-calendar-check me-2"></i>Appointments</a>
                     <a href="manage_services.php" class="nav-item nav-link"><i class="fa fa-cut me-2"></i>Services</a>
                     <a href="manage_staff.php" class="nav-item nav-link"><i class="fa fa-user-tie me-2"></i>Staff</a>
                     <a href="reports.php" class="nav-item nav-link"><i class="fa fa-chart-bar me-2"></i>Reports</a>
@@ -110,15 +132,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="content">
             <!-- Navbar Start -->
             <nav class="navbar navbar-expand bg-light navbar-light sticky-top px-4 py-0">
-                <a href="index.html" class="navbar-brand d-flex d-lg-none me-4">
-                    <h2 class="text-primary mb-0"><i class="fa fa-hashtag"></i></h2>
-                </a>
                 <a href="#" class="sidebar-toggler flex-shrink-0">
                     <i class="fa fa-bars"></i>
                 </a>
-                <form class="d-none d-md-flex ms-4">
-                    <input class="form-control border-0" type="search" placeholder="Search">
-                </form>
                 <div class="navbar-nav align-items-center ms-auto">
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
@@ -135,23 +151,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </nav>
             <!-- Navbar End -->
 
-            <!-- Welcome Section Start -->
+            <!-- Appointments Start -->
             <div class="container-fluid pt-4 px-4">
-                <div class="row g-4">
-                    <div class="col-12">
-                        <div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
-                            <div>
-                                <h3 class="mb-0">Welcome to Dashboard, <?php echo htmlspecialchars($name); ?>!</h3>
-                                <p class="mb-0 text-muted">Here's an overview of your Bellezza Beauty  management system</p>
-                            </div>
-                            <i class="fa fa-tachometer-alt fa-3x text-primary"></i>
-                        </div>
+                <div class="bg-light rounded p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h5 class="mb-0">Manage Appointments</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Service</th>
+                                    <th>Schedule</th>
+                                    <th>Status</th>
+                                    <th>Contact</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php 
+                                if ($result->num_rows > 0):
+                                    while($row = $result->fetch_assoc()): 
+                                        $status_class = 'status-' . strtolower($row['status']);
+                                ?>
+                                <tr>
+                                    <td>
+                                        <strong><?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?></strong>
+                                    </td>
+                                    <td>
+                                        <div><?php echo htmlspecialchars(ucfirst($row['service_name'])); ?></div>
+                                        <small class="text-muted"><?php echo htmlspecialchars(ucfirst($row['service_category'])); ?></small>
+                                    </td>
+                                    <td>
+                                        <div><i class="far fa-calendar mr-1"></i><?php echo date('M d, Y', strtotime($row['date'])); ?></div>
+                                        <small class="text-muted"><i class="far fa-clock mr-1"></i><?php echo date('h:i A', strtotime($row['time'])); ?></small>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge <?php echo $status_class; ?>">
+                                            <?php echo ucfirst($row['status']); ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="contact-info">
+                                            <div><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($row['email']); ?></div>
+                                            <div><i class="fas fa-phone"></i> <?php echo htmlspecialchars($row['phone']); ?></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php 
+                                    endwhile; 
+                                else:
+                                ?>
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <i class="fas fa-calendar-times fa-2x mb-3 text-muted"></i>
+                                        <p class="text-muted">No appointments found</p>
+                                    </td>
+                                </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-            <!-- Welcome Section End -->
-
-            <!-- Content area intentionally left empty -->
+            <!-- Appointments End -->
         </div>
         <!-- Content End -->
 
@@ -159,8 +222,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
     </div>
 
-    
-    
     <!-- JavaScript Libraries -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -174,7 +235,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Template Javascript -->
     <script src="js/main.js"></script>
-    
 </body>
-
 </html>

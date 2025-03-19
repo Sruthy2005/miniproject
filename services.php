@@ -1,3 +1,7 @@
+<?php
+session_start();
+require_once "connect.php";
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -32,79 +36,8 @@
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
-    <nav
-      class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light"
-      id="ftco-navbar"
-    >
-      <div class="container">
-        <a class="navbar-brand" href="index.php">BELLEZZA</a>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-toggle="collapse"
-          data-target="#ftco-nav"
-          aria-controls="ftco-nav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="oi oi-menu"></span> Menu
-        </button>
-
-        <div class="collapse navbar-collapse" id="ftco-nav">
-          <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-              <a href="index.php" class="nav-link">Home</a>
-            </li>
-            <li class="nav-item">
-              <a href="about.html" class="nav-link">About</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a href="#" class="nav-link dropdown" data-toggle="dropdown">Services</a>
-              <div class="dropdown-menu">
-                <a class="dropdown-item" href="hair.php">Hair</a>
-                <a class="dropdown-item" href="skin.php">Skin</a>
-                <a class="dropdown-item" href="makeup.php">Makeup</a>
-              </div>
-            </li>
-            <li class="nav-item">
-              <a href="contact.html" class="nav-link">Contact</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a href="#" class="nav-link dropdown" data-toggle="dropdown">Booking</a>
-              <div class="dropdown-menu">
-                <a class="dropdown-item" href="booking.php">Book a Service</a>
-                <a class="dropdown-item" href="my_bookings.php">My Bookings</a>
-              </div>
-            </li>
-            <li class="nav-item dropdown">
-              <?php
-              session_start();
-              if (isset($_SESSION['user_id'])) {
-                // Fetch user details from database
-                require_once "connect.php";
-                $user_id = $_SESSION['user_id'];
-                $query = "SELECT first_name, last_name FROM user WHERE id = '$user_id'";
-                $result = mysqli_query($conn, $query);
-                $user = mysqli_fetch_assoc($result);
-
-                echo '<a class="nav-link dropdown-toggle" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <span class="icon-user"></span> ' . $user['first_name'] . ' ' . $user['last_name'] . '
-              </a>
-              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-                <a class="dropdown-item" href="profile.php">Profile</a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="logout.php">Logout</a>
-              </div>';
-              } else {
-                echo '<li class="nav-item"><a href="login.php" class="nav-link">Login</a></li>';
-              }
-              ?>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-    <!-- END nav -->
+    <!-- Include your existing navigation -->
+<?php include 'navbar.php'; ?>
 
     <section class="ftco-section">
       <div class="container">
