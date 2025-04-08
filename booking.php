@@ -55,6 +55,15 @@ if ($services_result) {
     <link rel="stylesheet" href="css/icomoon.css">
     <link rel="stylesheet" href="css/style.css">
 
+    <!-- Google Analytics tracking code -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR-GA-ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'YOUR-GA-ID');
+    </script>
+
     <style>
         .booking-form-container {
             background: rgba(255, 255, 255, 0.95);
@@ -118,6 +127,30 @@ if ($services_result) {
             border-radius: 10px;
             margin-bottom: 20px;
         }
+
+        .staff-availability-container {
+            margin-top: 25px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .staff-availability-container table {
+            margin-bottom: 0;
+        }
+        
+        .staff-availability-container th {
+            background-color: #f8f9fa;
+        }
+        
+        .staff-availability-container .table-primary {
+            background-color: #e0f7fa !important;
+        }
+        
+        .select-staff {
+            border-radius: 20px;
+            padding: 3px 10px;
+        }
     </style>
 </head>
 <body>
@@ -168,22 +201,28 @@ if ($services_result) {
                             <div class="form-group">
                                 <label>Select Staff Member</label>
                                 <select class="form-control" name="staff_member" id="staffMember" required>
-                                    <option value="">First select a service category</option>
-                                    <?php
-                                    // Fetch active staff members based on selected service category
-                                    if (isset($_POST['service_category'])) {
-                                        $service_category = $_POST['service_category'];
-                                        require_once "connect.php";
-                                        $sql = "SELECT * FROM user WHERE role='staff' AND status='active' AND specialization='$service_category'";
-                                        $result = mysqli_query($conn, $sql);
-
-                                        while ($staff = mysqli_fetch_assoc($result)) {
-                                            echo '<option value="' . htmlspecialchars($staff['id']) . '">' . htmlspecialchars($staff['first_name'] . ' ' . $staff['last_name']) . '</option>';
-                                        }
-                                        mysqli_close($conn);
-                                    }
-                                    ?>
+                                    <option value="">Select date and time first</option>
                                 </select>
+                            </div>
+
+                            <!-- Add the staff availability table container -->
+                            <div class="staff-availability-container mt-4" style="display: none;">
+                                <h4 class="mb-3">Available Staff Members</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>Staff Name</th>
+                                                <th>Date</th>
+                                                <th>Time</th>
+                                                <th>Select</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="availableStaffTable">
+                                            <!-- Staff availability data will be populated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
 
                             <!-- Date and Time Selection -->
@@ -200,6 +239,26 @@ if ($services_result) {
                                         <input type="time" class="form-control" name="time" min="09:00" max="17:00" step="3600" required>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Address Fields -->
+                            <div class="form-group">
+                                <label>Address Information</label>
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <input type="text" class="form-control" name="street_address" placeholder="Street address" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" name="city" placeholder="City" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" name="state" placeholder="State" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" name="postcode" placeholder="Postcode" required>
+                                    </div>
                                 </div>
                             </div>
 
@@ -264,14 +323,18 @@ $(document).ready(function() {
     // Service category change handler
     $('#serviceCategory').change(function() {
         updateServiceOptions();
+        checkStaffAvailability();
+    });
+
+    // Date and time change handlers
+    $('#appointmentDate, [name="time"]').change(function() {
+        checkStaffAvailability();
     });
 
     function updateServiceOptions() {
         const category = $('#serviceCategory').val();
         const specificService = $('#specificService');
-        const staffMember = $('#staffMember');
         specificService.empty();
-        staffMember.empty();
         
         // Add default option
         specificService.append('<option value="">Select a service</option>');
@@ -281,18 +344,142 @@ $(document).ready(function() {
             servicesData[category].forEach(function(service) {
                 specificService.append(`
                     <option value="${service.id}">
-                        ${service.name} - ₱${service.price}
+                        ${service.name} - ${service.price}
                     </option>
                 `);
             });
         }
 
-        // Populate staff members based on the fetched data
-        const staffOptions = <?php echo json_encode($staff_members); ?>;
-        staffMember.append('<option value="">Select a staff member</option>');
-        staffOptions.forEach(function(staff) {
-            staffMember.append(`<option value="${staff.id}">${staff.name}</option>`);
+        // Clear staff dropdown
+        $('#staffMember').empty().append('<option value="">Select date and time first</option>');
+    }
+
+    function checkStaffAvailability() {
+        const date = $('#appointmentDate').val();
+        const time = $('[name="time"]').val();
+        const category = $('#serviceCategory').val();
+        const staffMember = $('#staffMember');
+        const staffTableContainer = $('.staff-availability-container');
+        const staffTableBody = $('#availableStaffTable');
+
+        // Clear staff dropdown and table
+        staffMember.empty().append('<option value="">Loading available staff...</option>');
+        staffTableBody.empty();
+        staffTableContainer.hide();
+
+        // Only proceed if we have all required values
+        if (!date || !time || !category) {
+            staffMember.empty().append('<option value="">Please select date and time first</option>');
+            return;
+        }
+
+        console.log('Checking staff availability with:', {date, time, category});
+
+        // Make AJAX call to check staff availability
+        $.ajax({
+            url: 'check_staff_availability.php',
+            method: 'POST',
+            data: {
+                date: date,
+                time: time,
+                service_category: category
+            },
+            dataType: 'json',
+            success: function(response) {
+                console.log('Response received:', response);
+                staffMember.empty();
+                
+                if (response.success && response.available_staff && response.available_staff.length > 0) {
+                    // Populate dropdown
+                    staffMember.append('<option value="">Select a staff member</option>');
+                    
+                    // Populate table
+                    response.available_staff.forEach(function(staff) {
+                        // Add to dropdown
+                        staffMember.append(`<option value="${staff.id}">${staff.name}</option>`);
+                        
+                        // Add to table
+                        const timeFormatted = formatTime(time);
+                        const dateFormatted = formatDate(date);
+                        
+                        staffTableBody.append(`
+                            <tr>
+                                <td>${staff.name}</td>
+                                <td>${dateFormatted}</td>
+                                <td>${timeFormatted}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary select-staff" 
+                                            data-staff-id="${staff.id}" data-staff-name="${staff.name}">
+                                        Select
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                    
+                    // Show the table
+                    staffTableContainer.show();
+                    
+                    // Handle select staff button clicks
+                    $('.select-staff').click(function() {
+                        const staffId = $(this).data('staff-id');
+                        const staffName = $(this).data('staff-name');
+                        
+                        // Select in dropdown
+                        staffMember.val(staffId);
+                        
+                        // Highlight selected row
+                        $('#availableStaffTable tr').removeClass('table-primary');
+                        $(this).closest('tr').addClass('table-primary');
+                    });
+                    
+                    console.log(`Found ${response.available_staff.length} available staff members`);
+                } else {
+                    staffMember.append('<option value="" disabled>No staff available with selected specialization</option>');
+                    // Don't show the table when no staff are available
+                    staffTableContainer.hide();
+                    console.log('No staff available', response);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', {
+                    status: status,
+                    error: error,
+                    response: xhr.responseText
+                });
+                
+                try {
+                    // Try to parse the error response
+                    const errorResponse = JSON.parse(xhr.responseText);
+                    console.log('Parsed error response:', errorResponse);
+                } catch (e) {
+                    console.log('Raw response text:', xhr.responseText);
+                }
+                
+                staffMember.empty();
+                staffMember.append('<option value="">Connection error - please try again</option>');
+                staffTableContainer.hide();
+            }
         });
+    }
+
+    // Helper functions to format date and time
+    function formatDate(dateStr) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', options);
+    }
+
+    function formatTime(timeStr) {
+        const timeParts = timeStr.split(':');
+        let hours = parseInt(timeParts[0]);
+        const minutes = timeParts[1];
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        
+        hours = hours % 12;
+        hours = hours ? hours : 12; // Handle midnight (0 hours)
+        
+        return `${hours}:${minutes} ${ampm}`;
     }
 
     // Pre-select service category and specific service if passed in URL
@@ -302,10 +489,8 @@ $(document).ready(function() {
     
     if (serviceParam) {
         $('#serviceCategory').val(serviceParam);
-        updateServiceOptions(); // Update the specific services dropdown
+        updateServiceOptions();
         
-        // If a specific service ID was passed, select it after a short delay
-        // to ensure the options are populated
         if (serviceIdParam) {
             setTimeout(() => {
                 $('#specificService').val(serviceIdParam);
@@ -314,6 +499,7 @@ $(document).ready(function() {
     }
 });
 </script>
+
 
 </body>
 </html> 

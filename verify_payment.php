@@ -90,8 +90,8 @@ try {
     // Set success message
     $_SESSION['success'] = "Payment processed successfully! Your booking is now confirmed.";
     
-    // Redirect to booking details
-    header("Location: booking_details.php?id=" . $booking_id);
+    // Redirect to feedback page instead of booking details
+    header("Location: feedback.php?booking_id=" . $booking_id);
     exit();
 
 } catch (Exception $e) {

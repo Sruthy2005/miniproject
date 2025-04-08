@@ -44,7 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user_role === 'staff') {
 
 // Fetch bookings based on user role
 if ($user_role === 'staff') {
-    $query = "SELECT b.*, u.first_name, u.last_name, u.email, u.phone,
+    $query = "SELECT b.*, u.first_name, u.last_name, u.email, u.phone, 
+              u.address, u.city, u.state, u.zip_code,
               p.status as payment_status, p.amount as payment_amount,
               p.payment_id
               FROM bookings b 
@@ -137,6 +138,8 @@ $result = $stmt->get_result();
                     <a href="../index.php" class="nav-item nav-link"><i class="fa fa-home me-2"></i>Home</a>
                     <a href="staff_dashboard.php" class="nav-item nav-link"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
                     <a href="my_appointments.php" class="nav-item nav-link active"><i class="fa fa-calendar-check me-2"></i>My Appointments</a>
+                    <a href="view_feedback.php" class="nav-item nav-link"><i class="fa fa-comments me-2"></i>View Feedback</a>
+                    <a href="my_posts.php" class="nav-item nav-link"><i class="fa fa-image me-2"></i>My Posts</a>
                     <a href="../profile.php" class="nav-item nav-link"><i class="fa fa-user me-2"></i>My Profile</a>
                     <a href="../logout.php" class="nav-item nav-link"><i class="fa fa-sign-out-alt me-2"></i>Logout</a>
                 </div>
@@ -202,7 +205,13 @@ $result = $stmt->get_result();
                                                 <?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?><br>
                                                 <small class="text-muted">
                                                     Email: <?php echo htmlspecialchars($row['email']); ?><br>
-                                                    Phone: <?php echo htmlspecialchars($row['phone']); ?>
+                                                    Phone: <?php echo htmlspecialchars($row['phone']); ?><br>
+                                                    Address: <?php echo htmlspecialchars($row['address'] ?? ''); ?><br>
+                                                    <?php if (!empty($row['city']) || !empty($row['state']) || !empty($row['zip_code'])): ?>
+                                                        <?php echo htmlspecialchars($row['city'] ?? ''); ?>, 
+                                                        <?php echo htmlspecialchars($row['state'] ?? ''); ?> 
+                                                        <?php echo htmlspecialchars($row['zip_code'] ?? ''); ?>
+                                                    <?php endif; ?>
                                                 </small>
                                             </td>
                                         <?php else: ?>
@@ -223,7 +232,7 @@ $result = $stmt->get_result();
                                             <?php if ($row['payment_amount']): ?>
                                                 <br>
                                                 <small class="text-muted">
-                                                    Amount: ₱<?php echo number_format($row['payment_amount'], 2); ?>
+                                                    Amount: <?php echo number_format($row['payment_amount'], 2); ?>
                                                 </small>
                                             <?php elseif ($row['status'] === 'completed'): ?>
                                                 <br>
@@ -242,13 +251,18 @@ $result = $stmt->get_result();
                                                         <option value="completed" <?php echo $row['status'] === 'completed' ? 'selected' : ''; ?>>Completed</option>
                                                         <option value="cancelled" <?php echo $row['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                                                     </select>
-                                                    <?php if ($row['status'] === 'completed' && !$row['payment_status']): ?>
+                                                </form>
+                                                <?php if ($row['status'] === 'confirmed'): ?>
+                                                    <button class="btn btn-sm btn-primary mt-2" onclick="scanQRCode(<?php echo $row['id']; ?>)">
+                                                        <i class="fas fa-qrcode"></i> Scan QR
+                                                    </button>
+                                                <?php endif; ?>
+                                                <?php if ($row['status'] === 'completed' && !$row['payment_status']): ?>
                                                     <br>
                                                     <small class="text-muted mt-1">
                                                         Service completed, awaiting payment
                                                     </small>
-                                                    <?php endif; ?>
-                                                </form>
+                                                <?php endif; ?>
                                             </td>
                                         <?php endif; ?>
                                     </tr>
@@ -269,7 +283,6 @@ $result = $stmt->get_result();
     <!-- JavaScript Libraries -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="lib/chart/chart.min.js"></script>
     <script src="lib/easing/easing.min.js"></script>
     <script src="lib/waypoints/waypoints.min.js"></script>
     <script src="lib/owlcarousel/owl.carousel.min.js"></script>
@@ -279,6 +292,176 @@ $result = $stmt->get_result();
 
     <!-- Template Javascript -->
     <script src="js/main.js"></script>
+
+    <!-- Add QR Scanner Modal before closing body tag -->
+    <div class="modal fade" id="qrScannerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Verify Appointment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="reader"></div>
+                    <div id="qr-result" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add QR Scanner Script before closing body tag -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+    let html5QrcodeScanner;
+    let currentAppointmentId;
+
+    function scanQRCode(appointmentId) {
+        currentAppointmentId = appointmentId;
+        
+        // Clear previous results
+        $('#qr-result').html('');
+        
+        // Show the modal
+        $('#qrScannerModal').modal('show');
+        
+        // Wait for modal to be fully shown before initializing scanner
+        $('#qrScannerModal').on('shown.bs.modal', function() {
+            startScanner();
+        });
+    }
+
+    function startScanner() {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear();
+        }
+
+        const html5QrCode = new Html5Qrcode("reader");
+        const config = {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0
+        };
+
+        html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            onScanSuccess,
+            onScanFailure
+        )
+        .catch(function(err) {
+            $('#qr-result').html(`
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> Error starting scanner: ${err}
+                </div>
+            `);
+        });
+
+        // Store the instance for cleanup
+        html5QrcodeScanner = html5QrCode;
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+        // Stop scanning after successful scan
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(() => {
+                verifyQRCode(decodedText);
+            });
+        }
+    }
+
+    function onScanFailure(error) {
+        // Handle scan failure, usually ignore it unless it's a specific error
+        console.warn(`QR Code scanning failure: ${error}`);
+    }
+
+    function verifyQRCode(decodedText) {
+        try {
+            // Try to parse the QR data to verify it's valid JSON
+            const qrData = JSON.parse(decodedText);
+            
+            // Show loading indicator
+            $('#qr-result').html(`
+                <div class="alert alert-info">
+                    <i class="fas fa-spinner fa-spin"></i> Verifying appointment...
+                </div>
+            `);
+            
+            // Send verification request to server
+            fetch('verify_qr.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    appointment_id: currentAppointmentId,
+                    qr_data: decodedText
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    $('#qr-result').html(`
+                        <div class="alert alert-success">
+                            <h5>Appointment Verified!</h5>
+                            <p>Client: ${data.client_name}<br>
+                            Service: ${data.service}<br>
+                            Date: ${data.date}<br>
+                            Time: ${data.time}</p>
+                        </div>
+                    `);
+                    
+                    // Reload page after 2 seconds
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    $('#qr-result').html(`
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i> ${data.message}
+                        </div>
+                    `);
+                    // Restart scanner after error
+                    startScanner();
+                }
+            })
+            .catch(error => {
+                $('#qr-result').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i> Error verifying appointment: ${error.message}
+                    </div>
+                `);
+                // Restart scanner after error
+                startScanner();
+            });
+            
+        } catch (error) {
+            $('#qr-result').html(`
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> Invalid QR code format: ${error.message}
+                </div>
+            `);
+            // Restart scanner after error
+            startScanner();
+        }
+    }
+
+    // Clean up scanner when modal is closed
+    $('#qrScannerModal').on('hidden.bs.modal', function () {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(() => {
+                html5QrcodeScanner = null;
+            }).catch(error => {
+                console.error("Failed to clear scanner:", error);
+            });
+        }
+        $('#qr-result').html('');
+    });
+    </script>
 </body>
 </html>
 

@@ -30,7 +30,7 @@ if(isset($_POST['check_email'])) {
             $mail->Host = 'smtp.gmail.com';
             $mail->SMTPAuth = true;
             $mail->Username = 'sruthyms200504@gmail.com';
-            $mail->Password = 'hqlu ylzq oohn wkkc';
+            $mail->Password = 'syoo wxqm wqjd fisg';
             $mail->SMTPSecure = 'ssl';
             $mail->Port = 465;
 

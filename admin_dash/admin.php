@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
 // Get user name from database
 require_once '../connect.php';
 $user_id = $_SESSION['user_id'];
-$sql = "SELECT first_name FROM user WHERE id = $user_id";
+$sql = "SELECT first_name, profile_image FROM user WHERE id = $user_id";
 $result = mysqli_query($conn, $sql);
 
 if (!$result) {
@@ -19,6 +19,17 @@ if (!$result) {
 
 $user = mysqli_fetch_assoc($result);
 $name = $user['first_name'];
+$profile_image = $user['profile_image'] ?? '';
+
+// Fix the path if it already includes "uploads/profiles/"
+if (!empty($profile_image) && strpos($profile_image, 'uploads/profiles/') === 0) {
+    // The database already has the path starting with "uploads/profiles/"
+    // So we need to adjust our reference to it
+    $profile_image_path = "../" . $profile_image; // Add ../ to make it relative from admin_dash directory
+} else {
+    // Keep using the original path approach as fallback
+    $profile_image_path = "../uploads/profile/" . $profile_image;
+}
 
 // Add CSRF protection
 if (!isset($_SESSION['csrf_token'])) {
@@ -82,10 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h3 class="text-primary" style="font-family: 'Belleza', sans-serif;">Admin Panel</h3>
                 </a>
                 <div class="d-flex align-items-center ms-4 mb-4">
-                    <div class="position-relative">
-                        <i class="fas fa-user-shield fa-2x"></i>
-                        <div class="bg-success rounded-circle border border-2 border-white position-absolute end-0 bottom-0 p-1"></div>
-                    </div>
+                    
                     <div class="ms-3">
                         <h6 class="mb-0"><?php echo htmlspecialchars($name); ?></h6>
                         <span>Admin</span>
@@ -98,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <a href="manage_appointments.php" class="nav-item nav-link"><i class="fa fa-calendar-check me-2"></i>Appointments</a>
                     <a href="manage_services.php" class="nav-item nav-link"><i class="fa fa-cut me-2"></i>Services</a>
                     <a href="manage_staff.php" class="nav-item nav-link"><i class="fa fa-user-tie me-2"></i>Staff</a>
+                    <a href="view_feedback.php" class="nav-item nav-link"><i class="fa fa-star me-2"></i>Feedback</a>
                     <a href="reports.php" class="nav-item nav-link"><i class="fa fa-chart-bar me-2"></i>Reports</a>
                     <a href="settings.php" class="nav-item nav-link"><i class="fa fa-cog me-2"></i>Settings</a>
                     <a href="../logout.php" class="nav-item nav-link"><i class="fa fa-sign-out-alt me-2"></i>Logout</a>
@@ -122,7 +131,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="navbar-nav align-items-center ms-auto">
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-shield fa-2x me-lg-2"></i>
+                            <?php if (!empty($profile_image)): ?>
+                                <img src="<?php echo htmlspecialchars($profile_image_path); ?>" 
+                                     alt="Profile" 
+                                     class="rounded-circle me-lg-2" 
+                                     width="40" height="40" 
+                                     style="width:40px; height:40px; object-fit:cover;">
+                            <?php else: ?>
+                                <i class="fas fa-user-shield fa-2x me-lg-2"></i>
+                            <?php endif; ?>
                             <span class="d-none d-lg-inline-flex"><?php echo htmlspecialchars($name); ?></span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end bg-light border-0 rounded-0 rounded-bottom m-0">

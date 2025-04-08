@@ -65,6 +65,7 @@ $staff_name = htmlspecialchars($staff['name'] ?? 'Staff Member');
 
     <!-- Template Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
+    <script type="text/javascript" src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
 </head>
 
 <body>
@@ -97,6 +98,7 @@ $staff_name = htmlspecialchars($staff['name'] ?? 'Staff Member');
                     <a href="../index.php" class="nav-item nav-link"><i class="fa fa-home me-2"></i>Home</a>
                     <a href="staff_dashboard.php" class="nav-item nav-link active"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
                     <a href="my_appointments.php" class="nav-item nav-link"><i class="fa fa-calendar-check me-2"></i>My Appointments</a>
+                    <a href="view_feedback.php" class="nav-item nav-link"><i class="fa fa-comments me-2"></i>View Feedback</a>
                     <a href="../profile.php" class="nav-item nav-link"><i class="fa fa-user me-2"></i>My Profile</a>
                     <a href="../logout.php" class="nav-item nav-link"><i class="fa fa-sign-out-alt me-2"></i>Logout</a>
                 </div>
@@ -125,6 +127,7 @@ $staff_name = htmlspecialchars($staff['name'] ?? 'Staff Member');
                         </a>
                         <div class="dropdown-menu dropdown-menu-end bg-light border-0 rounded-0 rounded-bottom m-0">
                             <a href="../profile.php" class="dropdown-item">My Profile</a>
+                            <a href="view_feedback.php" class="dropdown-item">View Feedback</a>
                             <a href="../logout.php" class="dropdown-item">Log Out</a>
                         </div>
                     </div>
@@ -148,15 +151,64 @@ $staff_name = htmlspecialchars($staff['name'] ?? 'Staff Member');
             </div>
             <!-- Welcome Section End -->
 
-            <!-- Content area intentionally left empty -->
+            <!-- Staff Posts Section -->
+            <div class="container-fluid pt-4 px-4">
+                <div class="bg-light rounded p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h3 class="mb-0">My Recent Posts</h3>
+                        <a href="my_posts.php" class="btn btn-sm btn-primary">Manage All Posts</a>
+                    </div>
+                    
+                    <div class="row g-4">
+                        <?php
+                        // Get recent posts by this staff member
+                        $posts_query = "SELECT * FROM staff_posts WHERE staff_id = ? ORDER BY created_at DESC LIMIT 3";
+                        $stmt = $conn->prepare($posts_query);
+                        $stmt->bind_param("i", $staff_id);
+                        $stmt->execute();
+                        $posts_result = $stmt->get_result();
+                        
+                        if ($posts_result->num_rows > 0):
+                            while ($post = $posts_result->fetch_assoc()):
+                        ?>
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <?php if (!empty($post['image_path'])): ?>
+                                        <img src="../<?php echo htmlspecialchars($post['image_path']); ?>" class="card-img-top" style="height: 200px; object-fit: cover;" alt="<?php echo htmlspecialchars($post['title']); ?>">
+                                    <?php else: ?>
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                            <i class="fas fa-image fa-3x text-secondary"></i>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="card-body">
+                                        <h5 class="card-title"><?php echo htmlspecialchars($post['title']); ?></h5>
+                                        <span class="badge bg-primary mb-2"><?php echo htmlspecialchars($post['service_category']); ?></span>
+                                        <p class="card-text text-truncate"><?php echo htmlspecialchars($post['description']); ?></p>
+                                        <div class="d-flex justify-content-between align-items-center mt-3">
+                                            <small class="text-muted"><?php echo date('M d, Y', strtotime($post['created_at'])); ?></small>
+                                            <a href="../view_post_detail.php?id=<?php echo $post['id']; ?>" class="btn btn-sm btn-outline-primary" target="_blank">View</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php 
+                            endwhile;
+                        else:
+                        ?>
+                            <div class="col-12 text-center py-3">
+                                <p class="text-muted mb-2">You haven't created any posts yet</p>
+                                <a href="my_posts.php" class="btn btn-primary">Create Your First Post</a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
         </div>
         <!-- Content End -->
 
         <!-- Back to Top -->
         <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
     </div>
-
-    
     
     <!-- JavaScript Libraries -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>

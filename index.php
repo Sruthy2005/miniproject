@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -565,6 +566,69 @@
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ftco-section img">
+      <div class="overlay"></div>
+      <div class="container">
+        <div class="row justify-content-center mb-5 pb-3">
+          <div class="col-md-7 text-center heading-section ftco-animate">
+            <h2 class="mb-4">Customer Testimonials</h2>
+            <p>See what our happy customers have to say about their experience at Bellezza</p>
+          </div>
+        </div>
+        
+        <div class="row ftco-animate">
+          <div class="col-md-12">
+            <div class="carousel-testimony owl-carousel">
+              <?php if (!empty($testimonials)): ?>
+                <?php foreach ($testimonials as $testimonial): ?>
+                  <div class="item">
+                    <div class="testimony-wrap p-4 pb-5">
+                      <div class="text">
+                        <div class="star-rating mb-3">
+                          <?php 
+                          for ($i = 1; $i <= 5; $i++) {
+                              if ($i <= $testimonial['rating']) {
+                                  echo '<span class="icon-star" style="color: #FFD700;"></span>';
+                              } else {
+                                  echo '<span class="icon-star-o" style="color: #FFD700;"></span>';
+                              }
+                          }
+                          ?>
+                        </div>
+                        <p class="mb-4"><?php echo htmlspecialchars(substr($testimonial['comment'], 0, 150)) . (strlen($testimonial['comment']) > 150 ? '...' : ''); ?></p>
+                        <div class="d-flex align-items-center">
+                          <div class="user-img" style="background-image: url(images/default-avatar.jpg)"></div>
+                          <div class="ml-4">
+                            <p class="name"><?php echo htmlspecialchars($testimonial['first_name'] . ' ' . substr($testimonial['last_name'], 0, 1) . '.'); ?></p>
+                            <span class="position"><?php echo htmlspecialchars($testimonial['service_name']); ?></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <div class="item">
+                  <div class="testimony-wrap p-4 pb-5">
+                    <div class="text">
+                      <p class="mb-4">We can't wait to hear about your experience at Bellezza! Book your appointment today.</p>
+                      <div class="d-flex align-items-center">
+                        <div class="user-img" style="background-image: url(images/default-avatar.jpg)"></div>
+                        <div class="ml-4">
+                          <p class="name">Bellezza Team</p>
+                          <span class="position">Spa & Beauty</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <?php endif; ?>
             </div>
           </div>
         </div>

@@ -18,6 +18,21 @@ if (!$staff) {
     header("Location: index.php");
     exit();
 }
+
+// Check if staff_posts table exists and fetch staff posts
+$staff_posts = [];
+$table_check = mysqli_query($conn, "SHOW TABLES LIKE 'staff_posts'");
+if (mysqli_num_rows($table_check) > 0) {
+    $posts_query = "SELECT * FROM staff_posts WHERE staff_id = ? ORDER BY created_at DESC LIMIT 3";
+    $posts_stmt = mysqli_prepare($conn, $posts_query);
+    if ($posts_stmt) {
+        mysqli_stmt_bind_param($posts_stmt, "i", $staff_id);
+        mysqli_stmt_execute($posts_stmt);
+        $posts_result = mysqli_stmt_get_result($posts_stmt);
+        $staff_posts = mysqli_fetch_all($posts_result, MYSQLI_ASSOC);
+        mysqli_stmt_close($posts_stmt);
+    }
+}
 ?>
 
 
@@ -137,6 +152,44 @@ if (!$staff) {
                 </div>
             </div>
         </div>
+    </div>
+</section>
+
+<!-- Staff Posts Section -->
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-7 heading-section text-center ftco-animate">
+                <h2 class="mb-4">Posts by <?php echo htmlspecialchars($staff['first_name']); ?></h2>
+                <p>Read the latest beauty tips, tutorials and insights from <?php echo htmlspecialchars($staff['first_name'] . ' ' . $staff['last_name']); ?>.</p>
+            </div>
+        </div>
+        <div class="row">
+            <?php if (empty($staff_posts)): ?>
+                <div class="col-md-12 text-center">
+                    <p>No posts available yet.</p>
+                </div>
+            <?php else: ?>
+                <?php foreach ($staff_posts as $post): ?>
+                    <div class="col-md-4 ftco-animate">
+                        <div class="blog-entry">
+                            <a href="view_post_detail.php?id=<?php echo $post['id']; ?>" class="block-20" style="background-image: url('<?php echo !empty($post['image_path']) ? htmlspecialchars($post['image_path']) : 'images/default-post.jpg'; ?>');">
+                            </a>
+                            <div class="text p-4">
+                                <div class="meta">
+                                    <div><a href="#"><?php echo date('M j, Y', strtotime($post['created_at'])); ?></a></div>
+                                    <div><span class="badge badge-light"><?php echo htmlspecialchars($post['service_category']); ?></span></div>
+                                </div>
+                                <h3 class="heading"><a href="view_post_detail.php?id=<?php echo $post['id']; ?>"><?php echo htmlspecialchars($post['title']); ?></a></h3>
+                                <p><?php echo htmlspecialchars(substr($post['description'], 0, 100)) . '...'; ?></p>
+                                <p><a href="view_post_detail.php?id=<?php echo $post['id']; ?>" class="btn btn-primary">Read more</a></p>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+        
     </div>
 </section>
 

@@ -21,7 +21,7 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $booking_id = $_GET['id'];
 $user_id = $_SESSION['user_id'];
 
-// Fetch booking details to verify it belongs to the current user
+// Fetch booking details to verify it belongs to the current usr
 $query = "SELECT 
             b.*, 
             u.first_name,
@@ -140,7 +140,7 @@ $receipt_id = 'booking_' . $booking_id;
                             ?>
                         </p>
                         <div class="payment-amount">
-                            ₱<?php echo number_format($booking['service_price'], 2); ?>
+                            <?php echo number_format($booking['service_price'], 2); ?> PHP
                         </div>
                     </div>
 

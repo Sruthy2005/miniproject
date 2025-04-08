@@ -86,6 +86,7 @@ if (!$services) {
                     <a href="manage_appointments.php" class="nav-item nav-link"><i class="fa fa-calendar-check me-2"></i>Appointments</a>
                     <a href="manage_services.php" class="nav-item nav-link active"><i class="fa fa-cut me-2"></i>Services</a>
                     <a href="manage_staff.php" class="nav-item nav-link"><i class="fa fa-user-tie me-2"></i>Staff</a>
+                    <a href="view_feedback.php" class="nav-item nav-link"><i class="fa fa-comments me-2"></i>View Feedback</a>
                     <a href="reports.php" class="nav-item nav-link"><i class="fa fa-chart-bar me-2"></i>Reports</a>
                     <a href="settings.php" class="nav-item nav-link"><i class="fa fa-cog me-2"></i>Settings</a>
                     <a href="../logout.php" class="nav-item nav-link"><i class="fa fa-sign-out-alt me-2"></i>Logout</a>
@@ -137,7 +138,7 @@ if (!$services) {
                                         <th>Service Name</th>
                                         <th>Category</th>
                                         <th>Description</th>
-                                        <th>Price (₱)</th>
+                                        <th>Price</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -153,12 +154,16 @@ if (!$services) {
                                         <td><?php echo isset($service['description']) ? htmlspecialchars($service['description']) : 'N/A'; ?></td>
                                         <td><?php echo isset($service['price']) ? htmlspecialchars($service['price']) : '0.00'; ?></td>
                                         <td>
-                                            <button class="btn btn-sm btn-primary" onclick="editService(<?php echo $service['id']; ?>)">
-                                                <i class="fa fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" onclick="deleteService(<?php echo $service['id']; ?>)">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-primary" onclick="editService(<?php echo $service['id']; ?>)" 
+                                                        title="Edit Service" data-bs-toggle="tooltip">
+                                                    <i class="fa fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="deleteService(<?php echo $service['id']; ?>)" 
+                                                        title="Delete Service" data-bs-toggle="tooltip">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <?php endwhile; ?>
@@ -177,7 +182,7 @@ if (!$services) {
                                         <th>Service Name</th>
                                         <th>Category</th>
                                         <th>Description</th>
-                                        <th>Price (₱)</th>
+                                        <th>Price</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -193,12 +198,16 @@ if (!$services) {
                                         <td><?php echo isset($service['description']) ? htmlspecialchars($service['description']) : 'N/A'; ?></td>
                                         <td><?php echo isset($service['price']) ? htmlspecialchars($service['price']) : '0.00'; ?></td>
                                         <td>
-                                            <button class="btn btn-sm btn-primary" onclick="editService(<?php echo $service['id']; ?>)">
-                                                <i class="fa fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" onclick="deleteService(<?php echo $service['id']; ?>)">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-primary" onclick="editService(<?php echo $service['id']; ?>)" 
+                                                        title="Edit Service" data-bs-toggle="tooltip">
+                                                    <i class="fa fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="deleteService(<?php echo $service['id']; ?>)" 
+                                                        title="Delete Service" data-bs-toggle="tooltip">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <?php endwhile; ?>
@@ -217,7 +226,7 @@ if (!$services) {
                                         <th>Service Name</th>
                                         <th>Category</th>
                                         <th>Description</th>
-                                        <th>Price (₱)</th>
+                                        <th>Price</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -233,12 +242,16 @@ if (!$services) {
                                         <td><?php echo isset($service['description']) ? htmlspecialchars($service['description']) : 'N/A'; ?></td>
                                         <td><?php echo isset($service['price']) ? htmlspecialchars($service['price']) : '0.00'; ?></td>
                                         <td>
-                                            <button class="btn btn-sm btn-primary" onclick="editService(<?php echo $service['id']; ?>)">
-                                                <i class="fa fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" onclick="deleteService(<?php echo $service['id']; ?>)">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-primary" onclick="editService(<?php echo $service['id']; ?>)" 
+                                                        title="Edit Service" data-bs-toggle="tooltip">
+                                                    <i class="fa fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="deleteService(<?php echo $service['id']; ?>)" 
+                                                        title="Delete Service" data-bs-toggle="tooltip">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <?php endwhile; ?>
@@ -277,7 +290,7 @@ if (!$services) {
                             <input type="file" class="form-control" id="serviceImage" name="image" accept="image/*" required>
                         </div>
                         <div class="mb-3">
-                            <label for="servicePrice" class="form-label">Price (₱)</label>
+                            <label for="servicePrice" class="form-label">Price</label>
                             <input type="number" step="0.01" class="form-control" id="servicePrice" name="price" required>
                         </div>
                         <div class="mb-3">
@@ -324,7 +337,7 @@ if (!$services) {
                             <small class="text-muted">Leave empty to keep current image</small>
                         </div>
                         <div class="mb-3">
-                            <label for="editServicePrice" class="form-label">Price (₱)</label>
+                            <label for="editServicePrice" class="form-label">Price</label>
                             <input type="number" step="0.01" class="form-control" id="editServicePrice" name="price" required>
                         </div>
                         <div class="mb-3">
@@ -376,49 +389,115 @@ if (!$services) {
     <script src="js/main.js"></script>
 
     <script>
+    // Define editService globally
     function editService(serviceId) {
-        // Validate serviceId is a positive integer
-        if (!Number.isInteger(serviceId) || serviceId <= 0) {
-            alert('Invalid service ID');
-            return;
-        }
+        if (!serviceId) return;
+        
+        // Get the button that was clicked
+        const button = event.target.closest('button');
+        if (!button) return;
+        
+        // Show loading state
+        const originalContent = button.innerHTML;
+        button.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+        button.disabled = true;
 
+        // Make the AJAX request
         $.ajax({
             url: 'get_service.php',
             type: 'POST',
+            dataType: 'json',
             data: {
                 service_id: serviceId,
                 csrf_token: '<?php echo $_SESSION['csrf_token']; ?>'
             },
             success: function(response) {
-                try {
-                    const service = JSON.parse(response);
-                    if (!service || !service.id) {
-                        throw new Error('Invalid service data');
-                    }
+                if (response && response.id) {
+                    // Populate the modal with service details
+                    $('#editServiceId').val(response.id);
+                    $('#editServiceName').val(response.name);
+                    $('#editServiceDescription').val(response.description);
+                    $('#editServicePrice').val(response.price);
+                    $('#editServiceCategory').val(response.category);
                     
-                    $('#editServiceId').val(service.id);
-                    $('#editServiceName').val(service.name);
-                    $('#editServiceDescription').val(service.description);
-                    $('#editServicePrice').val(service.price);
-                    $('#editServiceCategory').val(service.category);
-                    $('#editServiceModal').modal('show');
-                } catch (e) {
-                    alert('Error loading service details. Please try again.');
-                    console.error('Error parsing service data:', e);
+                    // Show the modal
+                    new bootstrap.Modal(document.getElementById('editServiceModal')).show();
+                } else {
+                    alert('Failed to load service details. Please try again.');
                 }
             },
             error: function(xhr, status, error) {
                 alert('Error loading service details. Please try again.');
-                console.error('AJAX error:', status, error);
+                console.error('AJAX error:', error);
+            },
+            complete: function() {
+                // Restore button state
+                button.innerHTML = originalContent;
+                button.disabled = false;
             }
         });
     }
 
+    // Update the form submission handler
+    $('#editServiceModal form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const form = this;
+        const submitBtn = $(form).find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        
+        // Show loading state
+        submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+        
+        $.ajax({
+            url: form.action,
+            type: 'POST',
+            data: new FormData(form),
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                try {
+                    if (response.success) {
+                        // Show success message before reload
+                        alert('Service updated successfully!');
+                        window.location.reload();
+                    } else {
+                        // Show error message
+                        alert(response.error || 'Failed to update service');
+                        submitBtn.html(originalText).prop('disabled', false);
+                    }
+                } catch (e) {
+                    alert('Error processing response');
+                    submitBtn.html(originalText).prop('disabled', false);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error updating service: ' + error);
+                console.error('Update Error:', {
+                    status: status,
+                    error: error,
+                    response: xhr.responseText
+                });
+                submitBtn.html(originalText).prop('disabled', false);
+            }
+        });
+    });
+
+    // Define deleteService globally
     function deleteService(serviceId) {
+        var deleteModal = new bootstrap.Modal(document.getElementById('deleteServiceModal'));
         $('#deleteServiceId').val(serviceId);
-        $('#deleteServiceModal').modal('show');
+        deleteModal.show();
     }
+
+    // Document ready functions
+    $(document).ready(function(){
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
     </script>
 </body>
 </html>

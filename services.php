@@ -283,11 +283,9 @@ require_once "connect.php";
               <h2 class="ftco-heading-2">Spa Center</h2>
               <ul class="list-unstyled">
                 <li><a href="#" class="py-2 d-block">Body Care</a></li>
-                <li><a href="#" class="py-2 d-block">Massage</a></li>
-                <li><a href="#" class="py-2 d-block">Hydrotherapy</a></li>
-                <li><a href="#" class="py-2 d-block">Yoga</a></li>
-                <li><a href="#" class="py-2 d-block">Sauna</a></li>
-                <li><a href="#" class="py-2 d-block">Aquazone</a></li>
+                <li><a href="#" class="py-2 d-block">Hair Care</a></li>
+                <li><a href="#" class="py-2 d-block">Skin Care</a></li>
+                <li><a href="#" class="py-2 d-block">Makeup</a></li>
               </ul>
             </div>
           </div>
@@ -324,13 +322,12 @@ require_once "connect.php";
           <div class="col-md-12 text-center">
             <p>
               <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
-              Copyright &copy;
+              
               <script>
                 document.write(new Date().getFullYear());
               </script>
-              All rights reserved | This template is made with
-              <i class="icon-heart" aria-hidden="true"></i> by
-              <a href="https://colorlib.com" target="_blank">Colorlib</a>
+              <i class="icon-heart" aria-hidden="true"></i>
+              <a href="https://colorlib.com" target="_blank"></a>
               <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
             </p>
           </div>

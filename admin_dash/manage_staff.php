@@ -80,6 +80,7 @@ $staff_result = mysqli_query($conn, $staff_sql);
                     <a href="manage_appointments.php" class="nav-item nav-link"><i class="fa fa-calendar-check me-2"></i>Appointments</a>
                     <a href="manage_services.php" class="nav-item nav-link"><i class="fa fa-cut me-2"></i>Services</a>
                     <a href="manage_staff.php" class="nav-item nav-link active"><i class="fa fa-user-tie me-2"></i>Staff</a>
+                    <a href="view_feedback.php" class="nav-item nav-link"><i class="fa fa-comments me-2"></i>View Feedback</a>
                     <a href="reports.php" class="nav-item nav-link"><i class="fa fa-chart-bar me-2"></i>Reports</a>
                     <a href="settings.php" class="nav-item nav-link"><i class="fa fa-cog me-2"></i>Settings</a>
                     <a href="../logout.php" class="nav-item nav-link"><i class="fa fa-sign-out-alt me-2"></i>Logout</a>
@@ -98,7 +99,15 @@ $staff_result = mysqli_query($conn, $staff_sql);
                 <div class="navbar-nav align-items-center ms-auto">
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-shield fa-2x me-lg-2"></i>
+                            <?php if (!empty($profile_image)): ?>
+                                <img src="<?php echo htmlspecialchars($profile_image_path); ?>" 
+                                     alt="Profile" 
+                                     class="rounded-circle me-lg-2" 
+                                     width="40" height="40" 
+                                     style="width:40px; height:40px; object-fit:cover;">
+                            <?php else: ?>
+                                <i class="fas fa-user-shield fa-2x me-lg-2"></i>
+                            <?php endif; ?>
                             <span class="d-none d-lg-inline-flex"><?php echo htmlspecialchars($name); ?></span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end bg-light border-0 rounded-0 rounded-bottom m-0">
@@ -107,7 +116,6 @@ $staff_result = mysqli_query($conn, $staff_sql);
                             <a href="../logout.php" class="dropdown-item">Log Out</a>
                         </div>
                     </div>
-                </div>
             </nav>
             <!-- Navbar End -->
 
@@ -135,9 +143,14 @@ $staff_result = mysqli_query($conn, $staff_sql);
             <div class="bg-light rounded p-4">
                     <div class="d-flex align-items-center justify-content-between mb-4">
                         <h6 class="mb-0">Staff List</h6>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStaffModal">
-                            <i class="fa fa-plus me-2"></i>Add New Staff
-                        </button>
+                        <div>
+                            <a href="convert_to_staff.php" class="btn btn-success me-2">
+                                <i class="fa fa-user-plus me-2"></i>Convert User to Staff
+                            </a>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStaffModal">
+                                <i class="fa fa-plus me-2"></i>Add New Staff
+                            </button>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table class="table text-start align-middle table-bordered table-hover mb-0">

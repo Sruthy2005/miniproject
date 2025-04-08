@@ -32,6 +32,40 @@ $result = $conn->query($sql);
 if (!$result) {
     die("Query failed: " . $conn->error);
 }
+
+// Fetch booking details
+if (isset($_GET['id'])) {
+    $booking_id = $_GET['id'];
+    
+    $sql = "SELECT b.*, 
+            u.first_name, u.last_name, u.email, u.phone,
+            s.name as service_name, 
+            staff.first_name as staff_first_name, staff.last_name as staff_last_name
+            FROM bookings b
+            JOIN user u ON b.user_id = u.id
+            JOIN service s ON b.specific_service = s.id
+            LEFT JOIN user staff ON b.staff_member = staff.id
+            WHERE b.id = ?";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $booking_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $booking = $result->fetch_assoc();
+        
+        // Get feedback if it exists
+        $feedback_sql = "SELECT * FROM feedback WHERE booking_id = ?";
+        $feedback_stmt = $conn->prepare($feedback_sql);
+        $feedback_stmt->bind_param("i", $booking_id);
+        $feedback_stmt->execute();
+        $feedback_result = $feedback_stmt->get_result();
+        
+        $has_feedback = $feedback_result->num_rows > 0;
+        $feedback = $has_feedback ? $feedback_result->fetch_assoc() : null;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -120,6 +154,7 @@ if (!$result) {
                     <a href="manage_appointments.php" class="nav-item nav-link active"><i class="fa fa-calendar-check me-2"></i>Appointments</a>
                     <a href="manage_services.php" class="nav-item nav-link"><i class="fa fa-cut me-2"></i>Services</a>
                     <a href="manage_staff.php" class="nav-item nav-link"><i class="fa fa-user-tie me-2"></i>Staff</a>
+                    <a href="view_feedback.php" class="nav-item nav-link"><i class="fa fa-comments me-2"></i>View Feedback</a>
                     <a href="reports.php" class="nav-item nav-link"><i class="fa fa-chart-bar me-2"></i>Reports</a>
                     <a href="settings.php" class="nav-item nav-link"><i class="fa fa-cog me-2"></i>Settings</a>
                     <a href="../logout.php" class="nav-item nav-link"><i class="fa fa-sign-out-alt me-2"></i>Logout</a>
@@ -136,9 +171,18 @@ if (!$result) {
                     <i class="fa fa-bars"></i>
                 </a>
                 <div class="navbar-nav align-items-center ms-auto">
+                <div class="navbar-nav align-items-center ms-auto">
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-shield fa-2x me-lg-2"></i>
+                            <?php if (!empty($profile_image)): ?>
+                                <img src="<?php echo htmlspecialchars($profile_image_path); ?>" 
+                                     alt="Profile" 
+                                     class="rounded-circle me-lg-2" 
+                                     width="40" height="40" 
+                                     style="width:40px; height:40px; object-fit:cover;">
+                            <?php else: ?>
+                                <i class="fas fa-user-shield fa-2x me-lg-2"></i>
+                            <?php endif; ?>
                             <span class="d-none d-lg-inline-flex"><?php echo htmlspecialchars($name); ?></span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end bg-light border-0 rounded-0 rounded-bottom m-0">
@@ -197,6 +241,13 @@ if (!$result) {
                                             <div><i class="fas fa-phone"></i> <?php echo htmlspecialchars($row['phone']); ?></div>
                                         </div>
                                     </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="#" class="btn btn-sm btn-primary view-details" data-id="<?php echo $row['id']; ?>">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </div>
+                                    </td>
                                 </tr>
                                 <?php 
                                     endwhile; 
@@ -218,6 +269,26 @@ if (!$result) {
         </div>
         <!-- Content End -->
 
+        <!-- Appointment Details Modal -->
+        <div class="modal fade" id="appointmentDetailsModal" tabindex="-1" aria-labelledby="appointmentDetailsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="appointmentDetailsModalLabel">Appointment Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="appointmentDetailsContent">
+                            <!-- Content will be loaded here via AJAX -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Back to Top -->
         <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
     </div>
@@ -235,5 +306,29 @@ if (!$result) {
 
     <!-- Template Javascript -->
     <script src="js/main.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Handle clicking "View" button
+            $('.view-details').click(function(e) {
+                e.preventDefault();
+                const appointmentId = $(this).data('id');
+                
+                // Load appointment details via AJAX
+                $.ajax({
+                    url: 'get_appointment_details.php',
+                    type: 'GET',
+                    data: { id: appointmentId },
+                    success: function(response) {
+                        $('#appointmentDetailsContent').html(response);
+                        $('#appointmentDetailsModal').modal('show');
+                    },
+                    error: function() {
+                        alert('Error loading appointment details');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

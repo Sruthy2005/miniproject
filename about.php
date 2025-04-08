@@ -248,14 +248,12 @@ require_once "connect.php";
           </div>
           <div class="col-md-2">
             <div class="ftco-footer-widget mb-4 ml-md-4">
-              <h2 class="ftco-heading-2">Spa Center</h2>
+              <h2 class="ftco-heading-2">BELLEZZA</h2>
               <ul class="list-unstyled">
                 <li><a href="#" class="py-2 d-block">Body Care</a></li>
-                <li><a href="#" class="py-2 d-block">Massage</a></li>
-                <li><a href="#" class="py-2 d-block">Hydrotherapy</a></li>
-                <li><a href="#" class="py-2 d-block">Yoga</a></li>
-                <li><a href="#" class="py-2 d-block">Sauna</a></li>
-                <li><a href="#" class="py-2 d-block">Aquazone</a></li>
+                <li><a href="#" class="py-2 d-block">Hair Care</a></li>
+                <li><a href="#" class="py-2 d-block">Skin Care</a></li>
+                  <li><a href="#" class="py-2 d-block">Makeup</a></li>
               </ul>
             </div>
           </div>
@@ -264,13 +262,6 @@ require_once "connect.php";
               <h2 class="ftco-heading-2">Have a Questions?</h2>
               <div class="block-23 mb-3">
                 <ul>
-                  <li>
-                    <span class="icon icon-map-marker"></span
-                    ><span class="text"
-                      >203 Fake St. Mountain View, San Francisco, California,
-                      USA</span
-                    >
-                  </li>
                   <li>
                     <a href="#"
                       ><span class="icon icon-phone"></span
@@ -292,13 +283,13 @@ require_once "connect.php";
           <div class="col-md-12 text-center">
             <p>
               <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
-              Copyright &copy;
+              
               <script>
                 document.write(new Date().getFullYear());
               </script>
-              All rights reserved | This template is made with
-              <i class="icon-heart" aria-hidden="true"></i> by
-              <a href="https://colorlib.com" target="_blank">Colorlib</a>
+              
+              <i class="icon-heart" aria-hidden="true"></i> 
+              <a href="https://colorlib.com" target="_blank"></a>
               <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
             </p>
           </div>

@@ -35,6 +35,7 @@ if ($user) {
     $user['phone'] = $user['phone'] ?? '';
     $user['skin_type'] = $user['skin_type'] ?? '';
     $user['hair_type'] = $user['hair_type'] ?? '';
+    $user['address'] = $user['address'] ?? '';
 }
 
 // Handle profile update
@@ -45,11 +46,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $phone = trim($_POST['phone']);
     $skin_type = trim($_POST['skin_type']);
     $hair_type = trim($_POST['hair_type']);
+    $street_address = trim($_POST['street_address']);
+    $city = trim($_POST['city']);
+    $state = trim($_POST['state']);
+    $postcode = trim($_POST['postcode']);
     
     // Basic validation
     if (!empty($first_name) && !empty($last_name) && !empty($email)) {
-        $update_stmt = $conn->prepare("UPDATE user SET first_name = ?, last_name = ?, email = ?, phone = ?, skin_type = ?, hair_type = ? WHERE id = ?");
-        $update_stmt->bind_param("ssssssi", $first_name, $last_name, $email, $phone, $skin_type, $hair_type, $user_id);
+        $address = $street_address . ',' . $city . ',' . $state . ',' . $postcode;
+        $update_stmt = $conn->prepare("UPDATE user SET first_name = ?, last_name = ?, email = ?, phone = ?, skin_type = ?, hair_type = ?, address = ? WHERE id = ?");
+        $update_stmt->bind_param("sssssssi", $first_name, $last_name, $email, $phone, $skin_type, $hair_type, $address, $user_id);
         
         if ($update_stmt->execute()) {
             $success_message = "Profile updated successfully!";
@@ -58,6 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $user['last_name'] = $last_name;
             $user['email'] = $email;
             $user['phone'] = $phone;
+            $user['skin_type'] = $skin_type;
+            $user['hair_type'] = $hair_type;
+            $user['address'] = $address;
         } else {
             $error_message = "Error updating profile.";
         }
@@ -66,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// Add this at the top of your PHP section to handle image upload
+// Handle image upload
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['profile_image'])) {
     $target_dir = "uploads/profiles/";
     if (!file_exists($target_dir)) {
@@ -95,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['profile_image'])) {
 // When initially fetching user data, also set the profile image in session
 if ($user) {
     $_SESSION['profile_image'] = $user['profile_image'] ?? 'images/default-avatar.jpg';
-    // ... rest of the user data initialization
 }
 ?>
 
@@ -104,244 +112,472 @@ if ($user) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
+    <title>My Profile | BELLEZZA</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #ff7eb3;
+            --primary-dark: #ff5c9c;
+            --secondary: #7571ff;
+            --accent: #71caf3;
+            --light: #f8f9fa;
+            --dark: #2d3436;
+            --gray: #636e72;
+            --success: #00b894;
+            --danger: #ff7675;
+            --card-border-radius: 16px;
+            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background-color: #f8f9fa;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Poppins', sans-serif;
+            background: #f5f7fc;
+            color: var(--dark);
+            min-height: 100vh;
         }
+
         .dashboard-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
             display: flex;
-            gap: 30px;
+            min-height: 100vh;
         }
+
+        /* Sidebar Styles */
         .sidebar {
             width: 280px;
             background: white;
-            border-radius: 20px;
-            padding: 30px;
+            box-shadow: var(--box-shadow);
+            padding: 30px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            z-index: 100;
         }
+
+        .sidebar-brand {
+            padding: 0 30px 30px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .sidebar-brand a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .sidebar-brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+            background:black;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-menu {
+            padding: 30px 0;
+        }
+
+        .nav-item {
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            color: var(--gray);
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            color: var(--primary);
+            background: rgba(255, 126, 179, 0.05);
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+            background: rgba(255, 126, 179, 0.1);
+            border-left: 3px solid var(--primary);
+        }
+
+        .nav-item i {
+            margin-right: 15px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content Styles */
         .main-content {
             flex: 1;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
+            margin-left: 280px;
+            padding: 40px;
+            transition: all 0.3s ease;
         }
-        .logo {
-            font-size: 24px;
-            color: #333;
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 40px;
-            display: flex;
-            align-items: center;
         }
-        .logo img {
-            width: 40px;
-            margin-right: 10px;
+
+        .header h1 {
+            font-weight: 700;
+            font-size: 28px;
+            color: var(--dark);
+            margin: 0;
         }
-        .nav-item {
-            padding: 12px 15px;
-            color: #666;
-            display: flex;
-            align-items: center;
-            border-radius: 10px;
-            margin-bottom: 5px;
-            transition: all 0.3s;
-        }
-        .nav-item.active {
-            background: #f0f7ff;
-            color: #71caf3;
-        }
-        .nav-item i {
-            margin-right: 10px;
-        }
+
+        /* Profile Section Styles */
         .profile-section {
             display: flex;
+            flex-wrap: wrap;
             gap: 30px;
-            align-items: flex-start;
+            margin-bottom: 30px;
         }
-        .profile-image-section {
+
+        .profile-card {
+            background: white;
+            border-radius: var(--card-border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+            width: 100%;
+            overflow: hidden;
             position: relative;
-            width: 200px;
         }
-        .profile-image {
-            width: 200px;
-            height: 200px;
-            border-radius: 15px;
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .profile-image-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 5px solid white;
+        }
+
+        .profile-image-container img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            display: block;
         }
-        .upload-overlay {
+
+        .image-upload-overlay {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(113,202,243,0.9);
-            padding: 10px;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            padding: 15px 0 10px;
             text-align: center;
-            border-bottom-left-radius: 15px;
-            border-bottom-right-radius: 15px;
+            opacity: 0;
+            transition: all 0.3s;
             cursor: pointer;
         }
-        .upload-overlay i {
+
+        .profile-image-container:hover .image-upload-overlay {
+            opacity: 1;
+        }
+
+        .image-upload-overlay i {
             color: white;
+            font-size: 20px;
         }
-        .profile-info {
-            flex: 1;
+
+        .profile-info h2 {
+            font-size: 28px;
+            font-weight: 600;
+            margin: 0 0 10px;
+            color: var(--dark);
         }
-        .account-status {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            background: #e8f7ff;
-            color: #71caf3;
+
+        .profile-info p {
+            color: var(--gray);
+            margin: 0 0 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .profile-info p i {
+            width: 20px;
+            margin-right: 10px;
+            color: var(--primary);
+        }
+
+        .account-badge {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #e0f7ff, #c8f5fe);
+            color: var(--accent);
+            font-weight: 500;
             font-size: 14px;
-            margin-top: 10px;
+            padding: 5px 15px;
+            border-radius: 30px;
+            margin-top: 15px;
         }
-        .bills-section {
-            margin-top: 30px;
+
+        .account-badge i {
+            margin-right: 8px;
+        }
+
+        /* Form Styles */
+        .form-card {
             background: white;
-            border-radius: 20px;
-            padding: 20px;
-        }
-        .bill-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        .bill-item:last-child {
-            border-bottom: none;
-        }
-        .bill-status {
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-        }
-        .status-paid {
-            background: #e8f7ff;
-            color: #71caf3;
-        }
-        .profile-header {
-            display: flex;
-            align-items: center;
+            border-radius: var(--card-border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
             margin-bottom: 30px;
         }
-        .profile-info h2 {
-            margin: 0;
-            color: #333;
-            font-size: 24px;
+
+        .form-card h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            color: var(--dark);
         }
-        .profile-info p {
-            color: #666;
-            margin: 5px 0;
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--dark);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
         }
-        .form-section {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+
+        .form-group label i {
+            margin-right: 10px;
+            color: var(--primary);
+            width: 20px;
         }
+
         .form-control {
-            border: 1px solid #e0e0e0;
+            height: 50px;
+            padding: 10px 15px;
             border-radius: 10px;
-            padding: 9px 15px;
-            margin-bottom: 20px;
+            border: 1px solid rgba(0,0,0,0.1);
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s;
         }
+
         .form-control:focus {
-            border-color: #71caf3;
-            box-shadow: 0 0 0 3px rgba(113,202,243,0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 126, 179, 0.2);
         }
+
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23636e72' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            padding-right: 35px;
+        }
+
         .btn-update {
-            background: #71caf3;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
             border: none;
+            font-weight: 500;
+            font-size: 15px;
             padding: 12px 30px;
             border-radius: 10px;
-            font-weight: 500;
-        }
-        .user-header {
-            display: flex;
-            justify-content: space-between;
+            display: inline-flex;
             align-items: center;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(255, 126, 179, 0.3);
+        }
+
+        .btn-update:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 126, 179, 0.4);
+        }
+
+        .btn-update i {
+            margin-right: 10px;
+        }
+
+        /* Alert Styles */
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 15px 20px;
             margin-bottom: 30px;
-        }
-        .user-welcome {
             display: flex;
             align-items: center;
         }
-        .user-welcome img {
+
+        .alert i {
+            margin-right: 15px;
+            font-size: 18px;
+        }
+
+        .alert-success {
+            background-color: rgba(0, 184, 148, 0.1);
+            color: var(--success);
+        }
+
+        .alert-danger {
+            background-color: rgba(255, 118, 117, 0.1);
+            color: var(--danger);
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .profile-image-container {
+                margin: 0 auto 20px;
+            }
+            
+            .profile-info {
+                text-align: center;
+            }
+            
+            .profile-info p {
+                justify-content: center;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .fade-in-delay-1 {
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards;
+            animation-delay: 0.1s;
+        }
+
+        .fade-in-delay-2 {
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards;
+            animation-delay: 0.2s;
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            margin-left: 10px;
+            background: white;
+            box-shadow: var(--box-shadow);
+            z-index: 200;
+            text-align: center;
+            line-height: 40px;
+            cursor: pointer;
+            color: var(--primary);
+        }
+
+        textarea.form-control {
+            height: auto;
+            resize: vertical;
+            min-height: 80px;
         }
     </style>
 </head>
 <body>
+    <!-- Mobile Menu Toggle -->
+    <div class="menu-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+
     <div class="dashboard-container">
+        <!-- Sidebar -->
         <div class="sidebar">
-            <div class="logo">
+            <div class="sidebar-brand">
                 <a href="index.php">
-                    <span class="flaticon-flower" style="color: black"></span>
                     <h1>BELLEZZA</h1>
                 </a>
             </div>
-            <?php if ($user['role'] === 'admin' || $user['role'] === 'staff'): ?>
-            <a href="admin_dash/admin.php" class="nav-item">
-                <i class="fas fa-tachometer-alt"></i>
-                Back to Dashboard
-            </a>
-            <?php endif; ?>
-            <a href="profile.php" class="nav-item active">
-                <i class="fas fa-user"></i>
-                My Profile
-            </a>
-            <a href="change_password.php" class="nav-item">
-                <i class="fas fa-key"></i>
-                Change Password
-            </a>
-            <a href="logout.php" class="nav-item">
-                <i class="fas fa-sign-out-alt"></i>
-                Logout
-            </a>
+            
+            <div class="nav-menu">
+                <?php if ($user['role'] === 'admin'): ?>
+                <a href="admin_dash/admin.php" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Back to Dashboard
+                </a>
+                <?php elseif ($user['role'] === 'staff'): ?>
+                <a href="staff_dashh/staff_dashboard.php" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Back to Dashboard
+                </a>
+                <?php endif; ?>
+                
+                <a href="profile.php" class="nav-item active">
+                    <i class="fas fa-user"></i>
+                    My Profile
+                </a>
+                
+                <a href="change_password.php" class="nav-item">
+                    <i class="fas fa-key"></i>
+                    Change Password
+                </a>
+                
+                <a href="logout.php" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            </div>
         </div>
 
+        <!-- Main Content -->
         <div class="main-content">
-            <div class="user-header">
+            <div class="header fade-in">
                 <h1>My Profile</h1>
-                <div class="user-welcome">
-                </div>
             </div>
 
-            <div class="profile-section">
-                <div class="profile-image-section">
-                    <img src="<?php echo htmlspecialchars($user['profile_image'] ?? 'images/default-avatar.jpg'); ?>" 
-                         alt="Profile" class="profile-image">
-                    <label for="profile_image" class="upload-overlay">
-                        <i class="fas fa-camera"></i>
-                    </label>
-                    <input type="file" id="profile_image" name="profile_image" 
-                           style="display: none" accept="image/jpeg,image/png">
-                </div>
-                
-                <div class="profile-info">
-                    <h2><?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?></h2>
-                    <p><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($user['email']); ?></p>
-                    <p><i class="fas fa-phone"></i> <?php echo htmlspecialchars($user['phone']); ?></p>
-                    <div class="account-status">
-                        <i class="fas fa-check-circle"></i> Active Account
-                    </div>
-                </div>
-            </div>
-
+            <!-- Alerts -->
             <?php if (isset($success_message)): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle mr-2"></i><?php echo $success_message; ?>
+                <div class="alert alert-success alert-dismissible fade show fade-in" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    <?php echo $success_message; ?>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -349,61 +585,116 @@ if ($user) {
             <?php endif; ?>
             
             <?php if (isset($error_message)): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-circle mr-2"></i><?php echo $error_message; ?>
+                <div class="alert alert-danger alert-dismissible fade show fade-in" role="alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <?php echo $error_message; ?>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
             <?php endif; ?>
 
-            <div class="form-section">
+            <!-- Profile Card -->
+            <div class="profile-section fade-in">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-image-container">
+                            <img src="<?php echo htmlspecialchars($user['profile_image'] ?? 'images/default-avatar.jpg'); ?>" alt="Profile Image">
+                            <label for="profile_image" class="image-upload-overlay">
+                                <i class="fas fa-camera"></i>
+                            </label>
+                            <input type="file" id="profile_image" name="profile_image" style="display: none" accept="image/jpeg,image/png">
+                        </div>
+                        
+                        <div class="profile-info">
+                            <h2><?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?></h2>
+                            <p><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($user['email']); ?></p>
+                            <p><i class="fas fa-phone"></i> <?php echo htmlspecialchars($user['phone']); ?></p>
+                            <p><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($user['address'] ?? 'No address set'); ?></p>
+                            
+                            <div class="account-badge">
+                                <i class="fas fa-check-circle"></i> Active Account
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Card -->
+            <div class="form-card fade-in-delay-1">
+                <h3>Edit Profile Information</h3>
+                
                 <form method="POST" action="">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="first_name">
-                                    <i class="fas fa-user mr-2"></i>First Name
+                                    <i class="fas fa-user"></i> First Name
                                 </label>
                                 <input type="text" class="form-control" id="first_name" name="first_name" 
-                                       value="<?php echo htmlspecialchars($user['first_name'] ?? ''); ?>" required>
+                                    value="<?php echo htmlspecialchars($user['first_name'] ?? ''); ?>" required>
                             </div>
                         </div>
                         
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="last_name">
-                                    <i class="fas fa-user mr-2"></i>Last Name
+                                    <i class="fas fa-user"></i> Last Name
                                 </label>
                                 <input type="text" class="form-control" id="last_name" name="last_name" 
-                                       value="<?php echo htmlspecialchars($user['last_name'] ?? ''); ?>" required>
+                                    value="<?php echo htmlspecialchars($user['last_name'] ?? ''); ?>" required>
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="email">
-                                    <i class="fas fa-envelope mr-2"></i>Email Address
+                                    <i class="fas fa-envelope"></i> Email Address
                                 </label>
                                 <input type="email" class="form-control" id="email" name="email" 
-                                       value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>" required>
+                                    value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>" required>
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="phone">
-                                    <i class="fas fa-phone mr-2"></i>Phone Number
+                                    <i class="fas fa-phone"></i> Phone Number
                                 </label>
                                 <input type="tel" class="form-control" id="phone" name="phone" 
-                                       value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>" required>
+                                    value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>" required>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="address">
+                                    <i class="fas fa-map-marker-alt"></i> Address
+                                </label>
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <input type="text" class="form-control" name="street_address" id="street_address" placeholder="Street address" value="<?php echo !empty($user['address']) ? explode(',', $user['address'])[0] ?? '' : ''; ?>">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" name="city" id="city" placeholder="City" value="<?php echo !empty($user['address']) ? (explode(',', $user['address'])[1] ?? '') : ''; ?>">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" name="state" id="state" placeholder="State" value="<?php echo !empty($user['address']) ? (explode(',', $user['address'])[2] ?? '') : ''; ?>">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" name="postcode" id="postcode" placeholder="Postcode" value="<?php echo !empty($user['address']) ? (explode(',', $user['address'])[3] ?? '') : ''; ?>">
+                                    </div>
+                                </div>
+                                <input type="hidden" name="address" id="address">
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="skin_type">
-                                    <i class="fas fa-spa mr-2"></i>Skin Type
+                                    <i class="fas fa-spa"></i> Skin Type
                                 </label>
                                 <select class="form-control" id="skin_type" name="skin_type">
                                     <option value="">Select Skin Type</option>
@@ -418,7 +709,7 @@ if ($user) {
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="hair_type">
-                                    <i class="fas fa-cut mr-2"></i>Hair Type
+                                    <i class="fas fa-cut"></i> Hair Type
                                 </label>
                                 <select class="form-control" id="hair_type" name="hair_type">
                                     <option value="">Select Hair Type</option>
@@ -432,8 +723,8 @@ if ($user) {
                     </div>
                     
                     <div class="text-right mt-4">
-                        <button type="submit" class="btn btn-primary btn-update">
-                            <i class="fas fa-save mr-2"></i>Update Profile
+                        <button type="submit" class="btn btn-update">
+                            <i class="fas fa-save"></i> Update Profile
                         </button>
                     </div>
                 </form>
@@ -445,6 +736,7 @@ if ($user) {
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
+    // Profile image upload
     document.getElementById('profile_image').addEventListener('change', function() {
         const file = this.files[0];
         if (file) {
@@ -461,6 +753,25 @@ if ($user) {
             })
             .catch(error => console.error('Error:', error));
         }
+    });
+
+    // Mobile menu toggle
+    document.querySelector('.menu-toggle').addEventListener('click', function() {
+        document.querySelector('.sidebar').classList.toggle('active');
+    });
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // Get values from address fields
+        const street = document.getElementById('street_address').value.trim();
+        const city = document.getElementById('city').value.trim();
+        const state = document.getElementById('state').value.trim();
+        const postcode = document.getElementById('postcode').value.trim();
+        
+        // Combine into formatted address
+        const fullAddress = [street, city, state, postcode].filter(Boolean).join(', ');
+        
+        // Set the value of the hidden address field
+        document.getElementById('address').value = fullAddress;
     });
     </script>
 </body>

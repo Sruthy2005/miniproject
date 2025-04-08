@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Fetch user's bookings
+// Fetch user's bookings (excluding completed ones)
 $user_id = $_SESSION['user_id'];
 $query = "SELECT 
             b.*, 
@@ -20,7 +20,7 @@ $query = "SELECT
           FROM bookings b
           LEFT JOIN user staff ON b.staff_member = staff.id 
           LEFT JOIN service s ON b.specific_service = s.id
-          WHERE b.user_id = ?
+          WHERE b.user_id = ? AND b.status != 'completed'
           ORDER BY b.date DESC, b.time DESC";
 
 $stmt = $conn->prepare($query);
@@ -154,6 +154,12 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
 
         <div class="row">
             <div class="col-md-12">
+                <div class="mb-4 text-right">
+                    <a href="past_services.php" class="btn btn-outline-primary">
+                        <i class="oi oi-clock"></i> View Past Service History
+                    </a>
+                </div>
+                
                 <?php if (empty($bookings)): ?>
                     <div class="no-bookings">
                         <h4>No bookings found</h4>
@@ -185,7 +191,7 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                                     </p>
                                     <p class="booking-price">
                                         <strong>Price:</strong> 
-                                        <span class="amount">₱<?php echo number_format($booking['service_price'], 2); ?></span>
+                                        <span class="amount"><?php echo number_format($booking['service_price'], 2); ?></span>
                                     </p>
                                     <?php if ($booking['notes']): ?>
                                         <p><strong>Notes:</strong> <?php echo htmlspecialchars($booking['notes']); ?></p>
@@ -220,6 +226,10 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                                             <div class="booking-actions mt-2">
                                                 <a href="booking_details.php?id=<?php echo $booking['id']; ?>" 
                                                    class="btn btn-sm btn-info">View Details</a>
+                                                <?php if ($booking['status'] === 'completed'): ?>
+                                                <a href="feedback.php?booking_id=<?php echo $booking['id']; ?>" 
+                                                   class="btn btn-sm btn-primary mt-2">Submit Feedback</a>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     <?php endif; ?>

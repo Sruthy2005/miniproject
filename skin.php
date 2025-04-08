@@ -117,7 +117,6 @@
                   <h2 class="heading" style="font-size: 1.2rem;"><?php echo htmlspecialchars($service['name']); ?></h2>
                   <span class="excerpt d-block" style="font-size: 0.9rem;">Professional Skin Care Service</span>
                   <span class="price" style="font-size: 1.1rem;">
-                    <sup>₱</sup>
                     <span class="number"><?php echo htmlspecialchars($service['price']); ?></span>
                   </span>
                   <a href="booking.php?service=skin&service_id=<?php echo htmlspecialchars($service['id']); ?>" 

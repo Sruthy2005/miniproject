@@ -62,9 +62,11 @@
                 
                 // Add dashboard link for admin and staff
                 if($user['role'] == 'admin') {
-                  echo '<a class="dropdown-item" href="admin_dash/admin.php">Dashboard</a>';
+                  echo '<a class="dropdown-item" href="admin_dash/admin.php">Dashboard</a>
+                        <a class="dropdown-item" href="view_feedback.php">View Feedback</a>';
                 } else if($user['role'] == 'staff') {
-                  echo '<a class="dropdown-item" href="staff_dashh/staff_dashboard.php">Dashboard</a>';
+                  echo '<a class="dropdown-item" href="staff_dashh/staff_dashboard.php">Dashboard</a>
+                        <a class="dropdown-item" href="view_feedback.php">View Feedback</a>';
                 }
                 
                 echo '<a class="dropdown-item" href="profile.php">Profile</a>

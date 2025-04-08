@@ -25,10 +25,18 @@ $query = "SELECT
             s.description as service_description,
             s.price as service_price,
             p.payment_id,
-            p.created_at as payment_date
+            p.created_at as payment_date,
+            staff.first_name as staff_first_name,
+            staff.last_name as staff_last_name,
+            u.address as user_address,
+            u.city as user_city,
+            u.state as user_state,
+            u.zip_code as user_zip_code
           FROM bookings b
           JOIN service s ON b.specific_service = s.id
           LEFT JOIN payments p ON b.payment_id = p.payment_id
+          LEFT JOIN user staff ON b.staff_member = staff.id
+          LEFT JOIN user u ON b.user_id = u.id
           WHERE b.id = ? AND b.user_id = ?";
 
 $stmt = $conn->prepare($query);
@@ -140,7 +148,36 @@ $booking = $result->fetch_assoc();
                     </div>
 
                     <p><strong>Staff Member:</strong><br>
-                    <?php echo htmlspecialchars($booking['staff_member']); ?></p>
+                    <?php 
+                    if (!empty($booking['staff_first_name']) && !empty($booking['staff_last_name'])) {
+                        echo htmlspecialchars($booking['staff_first_name'] . ' ' . $booking['staff_last_name']);
+                    } else {
+                        echo 'Not assigned';
+                    }
+                    ?></p>
+
+                    <!-- Add user address section -->
+                    <div class="user-address mt-3">
+                        <h5>Your Address</h5>
+                        <address>
+                            <?php 
+                            if (!empty($booking['user_address'])) {
+                                echo htmlspecialchars($booking['user_address']) . '<br>';
+                                
+                                $location = [];
+                                if (!empty($booking['user_city'])) $location[] = htmlspecialchars($booking['user_city']);
+                                if (!empty($booking['user_state'])) $location[] = htmlspecialchars($booking['user_state']);
+                                if (!empty($booking['user_zip_code'])) $location[] = htmlspecialchars($booking['user_zip_code']);
+                                
+                                if (!empty($location)) {
+                                    echo implode(', ', $location);
+                                }
+                            } else {
+                                echo 'No address information available';
+                            }
+                            ?>
+                        </address>
+                    </div>
 
                     <?php if (!empty($booking['notes'])): ?>
                         <p><strong>Special Notes:</strong><br>
@@ -149,7 +186,7 @@ $booking = $result->fetch_assoc();
 
                     <div class="payment-info">
                         <h5>Payment Information</h5>
-                        <p><strong>Amount Paid:</strong> ₱<?php echo number_format($booking['service_price'], 2); ?></p>
+                        <p><strong>Amount Paid:</strong> <?php echo number_format($booking['service_price'], 2); ?></p>
                         <p><strong>Payment ID:</strong> <?php echo htmlspecialchars($booking['payment_id']); ?></p>
                         <p><strong>Payment Date:</strong> 
                         <?php 
@@ -157,6 +194,21 @@ $booking = $result->fetch_assoc();
                         echo $payment_date->format('F j, Y g:i A');
                         ?>
                         </p>
+                    </div>
+
+                    <!-- Add feedback button if payment is completed and feedback not yet provided -->
+                    <?php if ($booking['payment_status'] == 'paid' && (!isset($booking['has_feedback']) || $booking['has_feedback'] == 0)): ?>
+                        <div class="text-center mt-4 mb-3">
+                            <a href="feedback.php?booking_id=<?php echo $booking['id']; ?>" class="btn btn-outline-primary">
+                                <i class="fas fa-star mr-2"></i> Rate Your Experience
+                            </a>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="booking-qr-section mt-4">
+                        <h5>Appointment QR Code</h5>
+                        <p class="text-muted small">Staff will scan this code to mark the appointment as complete</p>
+                        <div id="qrcode"></div>
                     </div>
 
                     <div class="text-center mt-4">
@@ -174,7 +226,26 @@ $booking = $result->fetch_assoc();
 <script src="js/jquery.min.js"></script>
 <script src="js/jquery-migrate-3.0.1.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stellar.js/0.6.2/jquery.stellar.min.js"></script>
+<!-- Add Scrollax -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/scrollax/1.0.0/scrollax.min.js"></script>
 <script src="js/main.js"></script>
+
+<!-- Add QR code library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+    // Generate QR code with more information
+    var qrcode = new QRCode(document.getElementById("qrcode"), {
+        text: JSON.stringify({
+            booking_id: "<?php echo $booking_id; ?>",
+            appointment_date: "<?php echo $date->format('Y-m-d'); ?>",
+            service: "<?php echo htmlspecialchars($booking['service_name']); ?>"
+        }),
+        width: 128,
+        height: 128
+    });
+</script>
 
 </body>
 </html> 
