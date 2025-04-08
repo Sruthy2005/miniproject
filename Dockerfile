@@ -1,11 +1,11 @@
-# Use an official lightweight Python image
+# Use an official Python image as base
 FROM python:3.10-slim
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-# Set working directory inside the container
+# Set working directory
 WORKDIR /app
 
 # Install system dependencies
@@ -15,16 +15,20 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements.txt and install Python dependencies
-COPY requirements.txt .
+# Upgrade pip
 RUN pip install --upgrade pip
+
+# Copy requirements first for caching
+COPY requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire app into the container
+# Copy the rest of the application code
 COPY . .
 
-# Expose the port (change if needed)
+# Expose the port (default for Flask/FastAPI is 8000)
 EXPOSE 8000
 
-# Default command to run the app (change `app.py` if your entry point is different)
+# Default command to run the app (edit this to match your app's entry point)
 CMD ["python", "app.py"]
