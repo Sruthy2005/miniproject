@@ -1,23 +1,17 @@
-# Use an official Python runtime as a parent image
-FROM python:3.10-slim
+# Use an official PHP-Apache base image
+FROM php:8.1-apache
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Enable Apache mod_rewrite (commonly used in PHP frameworks like Laravel)
+RUN a2enmod rewrite
 
-# Set the working directory
-WORKDIR /app
+# Set working directory
+WORKDIR /var/www/html
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the code
+# Copy all files into the container
 COPY . .
 
-# Expose port 8000 to Render
-EXPOSE 8000
+# Expose port 80 for web traffic
+EXPOSE 80
 
-# Run the app with Gunicorn
-# Replace app:app if your main file is not app.py
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "app:app"]
+# Start Apache in the foreground (required for Docker containers)
+CMD ["apache2-foreground"]
