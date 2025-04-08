@@ -1,8 +1,12 @@
+import os
 from flask import Flask
+
 app = Flask(__name__)
 
-@app.route('/')
+@app.route("/")
 def hello():
     return "Hello from Render!"
 
-# No need for app.run() here
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))  # fallback if PORT is not set
+    app.run(host="0.0.0.0", port=port)
