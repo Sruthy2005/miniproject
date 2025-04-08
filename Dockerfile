@@ -1,20 +1,18 @@
-# Use an official Python runtime as a base image
+# Use official Python image
 FROM python:3.10-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy the requirements file first for better caching
+# Copy requirements and install dependencies
 COPY requirements.txt .
-
-# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your code
+# Copy rest of the project files
 COPY . .
 
-# Expose the port your app runs on (change if needed)
+# Expose the app port (change if needed)
 EXPOSE 8000
 
-# Start your app (adjust if you're using something else)
+# Command to run the app (adjust as needed)
 CMD ["python", "app.py"]
